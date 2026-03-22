@@ -51,6 +51,7 @@ info "Checking system packages..."
 PKGS=(
     build-essential cmake git wget python3.12-venv
     ros-jazzy-joy ros-jazzy-robot-state-publisher ros-jazzy-rviz2
+    ros-jazzy-rmw-cyclonedds-cpp
     libyaml-cpp-dev libspdlog-dev libboost-all-dev libfmt-dev libglfw3-dev
 )
 MISSING=()
@@ -197,7 +198,10 @@ info "Checking Python packages in venv..."
 info "Building workspace..."
 source /opt/ros/jazzy/setup.bash
 cd "$SCRIPT_DIR"
-colcon build --symlink-install
+# a2_mujoco uses /proc/self/exe to locate its install prefix, so its binary
+# must be physically copied (not symlinked) — build it separately without --symlink-install.
+colcon build --symlink-install --packages-skip a2_mujoco
+colcon build --packages-select a2_mujoco
 info "Build complete."
 
 # ---------------------------------------------------------------

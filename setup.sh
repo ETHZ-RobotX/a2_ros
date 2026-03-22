@@ -24,6 +24,10 @@ else
     echo "[a2_ros] WARNING: Python venv not found. Run install.sh first."
 fi
 
+# --- MuJoCo ---
+MUJOCO_DIR="$HOME/.mujoco/mujoco-3.5.0"
+export LD_LIBRARY_PATH="$MUJOCO_DIR/lib:${LD_LIBRARY_PATH}"
+
 # --- ROS2 middleware ---
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 export ROS_DOMAIN_ID=1

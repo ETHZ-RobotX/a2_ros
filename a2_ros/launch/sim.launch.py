@@ -62,7 +62,7 @@ def generate_launch_description():
 
     locomotion_node = Node(
         package='a2_locomotion_controller',
-        executable='locomotion_controller.py',
+        executable='a2_locomotion_controller.py',
         output='screen',
         parameters=[{'use_sim_time': True}],
     )
