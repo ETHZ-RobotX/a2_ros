@@ -64,7 +64,7 @@ def generate_launch_description():
         package='a2_locomotion_controller',
         executable='a2_locomotion_controller.py',
         output='screen',
-        parameters=[{'use_sim_time': True}],
+        parameters=[{'use_sim_time': False}],
     )
 
     joy_node = Node(
