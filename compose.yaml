@@ -1,0 +1,53 @@
+services:
+  a2_ros_dev:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.dev
+    # TODO: Explore better managed network setups instead of catch-all host
+    network_mode: host
+    privileged: true
+    gpus: all
+
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+
+    volumes:
+      # X11 socket for GUI
+      - type: bind
+        source: /tmp/.X11-unix
+        target: /tmp/.X11-unix
+
+      # Optional: share home configs
+      - type: bind
+        source: ~/.Xauthority
+        target: /root/.Xauthority
+
+      # Repositories
+      - type: bind
+        source: ./a2_ros
+        target: /a2_ros/a2_ros
+      - type: bind
+        source: ./external
+        target: /a2_ros/external
+
+      # FIXME: Note that changes require container restart for single file mounts
+      - type: bind
+        source: ./entrypoint.sh
+        target: /a2_ros/entrypoint.sh
+      - type: bind
+        source: setup.sh
+        target: /a2_ros/setup.sh
+      - type: bind
+        source: install.sh
+        target: /a2_ros/install.sh
+      - type: bind
+        source: ./.git
+        target: /a2_ros/.git
+
+    working_dir: /a2_ros
+
+    entrypoint: [ "./entrypoint.sh" ]
+    command: [ "bash" ]
+    stdin_open: true
+    tty: true

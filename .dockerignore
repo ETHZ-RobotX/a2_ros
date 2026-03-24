@@ -1,0 +1,16 @@
+# Git
+# TODO: Add this back once install script is fixed to not call submodules
+# .git/
+
+# Python venv
+.venv/
+
+# ROS2 / colcon
+build/
+install/
+log/
+*.pyc
+__pycache__/
+
+# Docker related
+docker/

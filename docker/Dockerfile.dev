@@ -1,0 +1,28 @@
+# TODO: This will eventually be moved to ETHZ-RobotX/rss_docker_base once the configuration matures
+ARG ROS_DISTRO=jazzy
+
+FROM ros:${ROS_DISTRO} AS base
+
+RUN apt-get update && apt-get install -y \
+    git \
+    libglfw3-dev \
+    libx11-dev \
+    xorg-dev \
+    ros-jazzy-rmw-cyclonedds-cpp \
+    ros-jazzy-urdf \
+    ros-jazzy-xacro \
+    ros-jazzy-rviz2 \
+    ros-jazzy-ros2-control \
+    ros-jazzy-ros2-controllers \
+    ros-jazzy-controller-manager \
+    ros-jazzy-urdfdom-py \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /a2_ros
+WORKDIR /a2_ros
+
+# TODO: Add back once a2_ros is shipped along with image and rosdep can refer to the a2_ros metapackage
+# RUN rosdep update && rosdep install --from-paths src --ignore-src --rosdistro jazzy -y
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
+
+COPY install.sh entrypoint.sh setup.sh install.sh /a2_ros

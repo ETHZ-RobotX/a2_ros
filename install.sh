@@ -39,6 +39,10 @@ fi
 # Submodules
 # ---------------------------------------------------------------
 info "Initialising git submodules..."
+
+# FIXME: This needs to be removed in favor of not dealing with submodules inside the docker environment
+git config --global --add safe.directory /a2_ros
+
 # a2_mujoco needs the mujoco symlink removed before git can clone into it
 MUJOCO_SYMLINK="$SCRIPT_DIR/external/a2_mujoco/mujoco"
 [ -L "$MUJOCO_SYMLINK" ] && rm "$MUJOCO_SYMLINK"
@@ -60,6 +64,7 @@ for pkg in "${PKGS[@]}"; do
 done
 if [ ${#MISSING[@]} -gt 0 ]; then
     info "Installing: ${MISSING[*]}"
+    sudo apt-get update
     sudo apt-get install -y "${MISSING[@]}"
 else
     info "All system packages present."
