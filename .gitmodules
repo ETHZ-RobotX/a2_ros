@@ -10,9 +10,9 @@
 [submodule "external/a2_locomotion_controller"]
 	path = external/a2_locomotion_controller
 	url = git@github.com:ETHZ-RobotX/a2_locomotion_controller.git
-[submodule "external/a2_mujoco"]
-	path = external/a2_mujoco
-	url = git@github.com:ETHZ-RobotX/a2_mujoco.git
+[submodule "external/a2_mujoco_sim"]
+	path = external/a2_mujoco_sim
+	url = git@github.com:ETHZ-RobotX/a2_mujoco_sim.git
 [submodule "external/unitree_ros2"]
 	path = external/unitree_ros2
 	url = https://github.com/unitreerobotics/unitree_ros2.git
