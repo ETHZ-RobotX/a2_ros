@@ -43,8 +43,8 @@ info "Initialising git submodules..."
 # FIXME: This needs to be removed in favor of not dealing with submodules inside the docker environment
 git config --global --add safe.directory /a2_ros
 
-# a2_mujoco needs the mujoco symlink removed before git can clone into it
-MUJOCO_SYMLINK="$SCRIPT_DIR/external/a2_mujoco/mujoco"
+# unitree_mujoco needs the mujoco symlink removed before git can clone into it
+MUJOCO_SYMLINK="$SCRIPT_DIR/external/unitree_mujoco/simulate/mujoco"
 [ -L "$MUJOCO_SYMLINK" ] && rm "$MUJOCO_SYMLINK"
 git -C "$SCRIPT_DIR" submodule update --init --recursive
 
@@ -112,11 +112,11 @@ else
     info "MuJoCo ${MUJOCO_VERSION} already present."
 fi
 
-# Fix symlink in a2_mujoco
-SYMLINK="$SCRIPT_DIR/external/a2_mujoco/mujoco"
+# Fix symlink in unitree_mujoco
+SYMLINK="$SCRIPT_DIR/external/unitree_mujoco/simulate/mujoco"
 rm -f "$SYMLINK"
 ln -s "$MUJOCO_DIR" "$SYMLINK"
-info "Symlink: external/a2_mujoco/mujoco -> $MUJOCO_DIR"
+info "Symlink: external/unitree_mujoco/simulate/mujoco -> $MUJOCO_DIR"
 
 # ---------------------------------------------------------------
 # Unitree SDK2
