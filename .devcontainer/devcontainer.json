@@ -1,16 +1,8 @@
-// Very basic devcontainer.json that uses docker compose to spawn up and
-// handle part of the container configuration work.
-// All the mounting and container configurations will be done via docker compose,
-// The devcontainer should only be for development specific feature additions and additional mounts.
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 {
-  "name": "a2_ros_devc",
+  "name": "a2_ros",
   "dockerComposeFile": "../compose.yaml",
   "service": "a2_ros_dev",
+  "workspaceFolder": "/a2_ros",
   "remoteUser": "root",
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {}
-  },
-  // Configure tool-specific properties.
-  "customizations": {}
+  "postCreateCommand": "bash -c 'source setup.sh'"
 }
