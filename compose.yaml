@@ -6,7 +6,7 @@ services:
     # TODO: Explore better managed network setups instead of catch-all host
     network_mode: host
     privileged: true
-    gpus: all
+    # gpus: all
 
     environment:
       - DISPLAY=${DISPLAY}
