@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     libglfw3-dev \
     libx11-dev \
     xorg-dev \
+    openssh-client \
     ros-jazzy-rmw-cyclonedds-cpp \
     ros-jazzy-urdf \
     ros-jazzy-xacro \

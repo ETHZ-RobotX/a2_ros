@@ -143,7 +143,10 @@ fi
 # ---------------------------------------------------------------
 # Ignore unitree_ros2 example package (not needed, would fail to build)
 # ---------------------------------------------------------------
-touch "$SCRIPT_DIR/external/unitree_ros2/example/COLCON_IGNORE"
+UNITREE_EXAMPLE="$SCRIPT_DIR/external/unitree_ros2/example"
+if [ -d "$UNITREE_EXAMPLE" ]; then
+    touch "$UNITREE_EXAMPLE/COLCON_IGNORE"
+fi
 
 # ---------------------------------------------------------------
 # Patch unitree message packages for ROS2 Jazzy
@@ -203,10 +206,10 @@ info "Checking Python packages in venv..."
 info "Building workspace..."
 source /opt/ros/jazzy/setup.bash
 cd "$SCRIPT_DIR"
-# a2_mujoco uses /proc/self/exe to locate its install prefix, so its binary
+# unitree_mujoco uses /proc/self/exe to locate its install prefix, so its binary
 # must be physically copied (not symlinked) — build it separately without --symlink-install.
-colcon build --symlink-install --packages-skip a2_mujoco
-colcon build --packages-select a2_mujoco
+colcon build --symlink-install --packages-skip unitree_mujoco
+colcon build --packages-select unitree_mujoco
 info "Build complete."
 
 # ---------------------------------------------------------------
