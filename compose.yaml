@@ -44,7 +44,10 @@ services:
       - type: bind
         source: ./.git
         target: /a2_ros/.git
-
+    
+    devices:
+      # Added a joystick device
+        - /dev/input/js0:/dev/input/js0
     working_dir: /a2_ros
 
     entrypoint: [ "./entrypoint.sh" ]
