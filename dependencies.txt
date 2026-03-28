@@ -1,0 +1,1 @@
+sudo apt install ros-jazzy-joint-state-publisher-gui

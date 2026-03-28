@@ -56,6 +56,7 @@ PKGS=(
     build-essential cmake git wget python3.12-venv
     ros-jazzy-joy ros-jazzy-robot-state-publisher ros-jazzy-rviz2
     ros-jazzy-rmw-cyclonedds-cpp
+    ros-jazzy-joint-state-publisher-gui
     libyaml-cpp-dev libspdlog-dev libboost-all-dev libfmt-dev libglfw3-dev
 )
 MISSING=()
