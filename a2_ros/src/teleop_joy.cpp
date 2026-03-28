@@ -44,23 +44,27 @@ private:
 
     twist_pub_->publish(twist);
 
+    int new_mode = current_mode_;
     if (msg->buttons[0] == 1 && msg->axes[2] == -1) {
-        current_mode_ = 1;   // Sit down
+        new_mode = 1;   // Sit down
     }
     if (msg->buttons[3] == 1 && msg->axes[2] == -1) {
-        current_mode_ = 2;   // Stand up
+        new_mode = 2;   // Stand up
     }
     if (msg->axes[2] == -1 && msg->axes[5] == -1) {
-        current_mode_ = 3;   // Walk
+        new_mode = 3;   // Walk
     }
-    mode.data = current_mode_;
-    mode_pub_->publish(mode);
+    if (new_mode != current_mode_) {
+        current_mode_ = new_mode;
+        mode.data = current_mode_;
+        mode_pub_->publish(mode);
+    }
   }
 
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr twist_pub_;
   rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr mode_pub_;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
-  int current_mode_ = 1; // Default to Sit down
+  int current_mode_ = 0;
 };
 
 int main(int argc, char * argv[])
