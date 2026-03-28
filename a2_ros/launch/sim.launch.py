@@ -31,7 +31,7 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
     description_dir = get_package_share_directory('a2_description')
-    mujoco_dir      = get_package_share_directory('a2_mujoco')
+    mujoco_dir      = get_package_share_directory('unitree_mujoco')
 
     # ---------- launch arguments ----------
     scene_arg = DeclareLaunchArgument(
@@ -52,8 +52,8 @@ def generate_launch_description():
 
     # ---------- nodes ----------
     mujoco_node = Node(
-        package='a2_mujoco',
-        executable='a2_mujoco',
+        package='unitree_mujoco',
+        executable='unitree_mujoco',
         output='screen',
         arguments=[scene_path, mujoco_dir],
         # MuJoCo resolves mesh paths relative to CWD
@@ -62,9 +62,9 @@ def generate_launch_description():
 
     locomotion_node = Node(
         package='a2_locomotion_controller',
-        executable='a2_locomotion_controller.py',
+        executable='locomotion_executor',
         output='screen',
-        parameters=[{'use_sim_time': False}],
+        parameters=[{'use_sim_time': True}],
     )
 
     joy_node = Node(
