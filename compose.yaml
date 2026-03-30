@@ -23,11 +23,6 @@ services:
         source: ~/.Xauthority
         target: /root/.Xauthority
 
-      # SSH keys for git operations
-      - type: bind
-        source: ~/.ssh
-        target: /root/.ssh
-
       # Repositories
       - type: bind
         source: ./a2_ros
@@ -49,7 +44,7 @@ services:
       - type: bind
         source: ./.git
         target: /a2_ros/.git
-    
+
     devices:
       # Added a joystick device
         - /dev/input/js0:/dev/input/js0
