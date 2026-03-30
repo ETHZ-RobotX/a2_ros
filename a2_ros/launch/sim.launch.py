@@ -88,12 +88,15 @@ def generate_launch_description():
         }]
     )
 
-    # --- optional visualisation ---
-    sim_clock_node = Node(
+    a2_bridge_node = Node(
         package='a2_description',
-        executable='sim_clock_node',
-        condition=IfCondition(LaunchConfiguration('rviz')),
+        executable='a2_bridge',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
     )
+
+    # --- optional visualisation ---
+
 
     robot_state_pub_node = Node(
         package='robot_state_publisher',
@@ -120,11 +123,11 @@ def generate_launch_description():
     return LaunchDescription([
         scene_arg,
         rviz_arg,
-        mujoco_node,
-        locomotion_node,
+        # mujoco_node,
+        # locomotion_node,
         joy_node,
         teleop_node,
-        sim_clock_node,
+        a2_bridge_node,
         robot_state_pub_node,
         rviz_node,
     ])
