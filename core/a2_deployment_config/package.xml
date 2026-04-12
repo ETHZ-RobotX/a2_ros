@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>a2_deployment_config</name>
+  <version>0.0.0</version>
+  <description>Configuration Files for Deployment to A2</description>
+
+  <maintainer email="rbharadwaj@ethz.ch">rbharadwaj</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+</package>

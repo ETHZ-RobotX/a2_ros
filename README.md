@@ -4,14 +4,15 @@ ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained R
 
 ## TODOs
 - [x] Provide base docker setup for development
-- [ ] Move dependency installations from install scripts to docker **Until this time, try not to recreate containers to save time**
-- [ ] Decide whether install script should manage git submodules too (and thus lie inside the docker runtime)
-- [ ] Remove interactive components of install script
-- [ ] Ship `a2_ros` source code with built image
+- [x] Move dependency installations from install scripts to docker **Until this time, try not to recreate containers to save time**
+- [x] Decide whether install script should manage git submodules too (and thus lie inside the docker runtime)
+- [x] Remove interactive components of install script
+- [x] Ship `a2_ros` source code with built image
 - [ ] Setup docker managed volumes for build artifacts (also requires deciding how to organize these)
 - [ ] Setup docker managed volumes for data artifacts (rosbags, pytorch models etc.)(also requires deciding how to organize these)
 - [ ] Remove all source code from meta-package `a2_ros` and only maintain dependencies
 - [ ] Add source folders for each subsystem `core/ sim/` etc.
+- [ ] Install other third party drivers related to lidars and other peripherals.
 
 ## Setup with Docker
 
@@ -37,29 +38,25 @@ ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained R
     ```
 
 ### Inside container
-1. **\[FIRST TIME ONLY\]**: Execute the install script. After the install script completes, you should expect to see a mujoco window. If not, there are X11 forwarding issues.
-    ```
-    ./scripts/install.sh
-    ```
-1. Source `/a2_ros/scripts/setup.sh`
+1. The ROS environment is already sourced when starting up a bash shell. Use the `/a2_ros/scripts/setup.sh` for refreshing the workspace
 
 ### Stopping container
-1. Stop the container with `docker compose stop a2_ros_dev`. As
-As long as the container is not recreated (either using `--force-recreate` or `docker compose down`), the installation scripts do not have to be re-run. The container will be restarted with all the source configurations ready.
+1. Stop the container with `docker compose stop a2_ros_dev`.
+2. Remove all resources (if required) with `docker compose down`
 
-## Setup
+## Setup - LEFT FOR COMPATIBILITY
 
 ```bash
 conda deactivate   # repeat until $CONDA_PREFIX is empty
 git clone git@github.com:ETHZ-RobotX/a2_ros.git --recursive
-bash a2_ros/scripts/install.sh
+bash a2_ros/scripts/local/install.sh
 ```
 
 ## Run
 
 Source in every new terminal:
 ```bash
-source scripts/setup.sh
+source a2_ros/scripts/local/setup.sh
 ```
 
 Launch the simulation:

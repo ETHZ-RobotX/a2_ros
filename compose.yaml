@@ -30,24 +30,24 @@ services:
       - type: bind
         source: ./external
         target: /a2_ros/external
+      - type: bind
+        source: ./core
+        target: /a2_ros/core
+      - type: bind
+        source: ./scripts
+        target: /a2_ros/scripts
 
       # FIXME: Note that changes require container restart for single file mounts
       - type: bind
         source: ./scripts/entrypoint.sh
         target: /a2_ros/scripts/entrypoint.sh
       - type: bind
-        source: ./scripts/setup.sh
-        target: /a2_ros/scripts/setup.sh
-      - type: bind
-        source: ./scripts/install.sh
-        target: /a2_ros/scripts/install.sh
-      - type: bind
         source: ./.git
         target: /a2_ros/.git
 
     devices:
       # Added a joystick device
-        - /dev/input/js0:/dev/input/js0
+      - /dev/input/js0:/dev/input/js0
     working_dir: /a2_ros
 
     entrypoint: [ "./scripts/entrypoint.sh" ]
