@@ -5,11 +5,11 @@ Starts:
   - a2_mujoco       : MuJoCo physics simulator (publishes /lowstate, subscribes /lowcmd)
   - locomotion_controller : RL policy node (subscribes /lowstate + /mode + /cmd_vel,
                                              publishes /lowcmd)
+  - a2_bridge       : republishes /lowstate as /joint_states and /imu/data
   - joy_node        : reads gamepad from /dev/input/js0
   - teleop_joy      : maps gamepad axes/buttons to /cmd_vel and /mode
 
 Optional (pass rviz:=true):
-  - sim_clock_node  : publishes /clock from sim time
   - robot_state_publisher : broadcasts TF from URDF
   - rviz2           : 3-D visualisation
 
@@ -67,6 +67,13 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}],
     )
 
+    a2_bridge_node = Node(
+        package='a2_description',
+        executable='a2_bridge',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
+    )
+
     joy_node = Node(
         package='joy',
         executable='joy_node',
@@ -88,16 +95,7 @@ def generate_launch_description():
         }]
     )
 
-    a2_bridge_node = Node(
-        package='a2_description',
-        executable='a2_bridge',
-        output='screen',
-        parameters=[{'use_sim_time': True}],
-    )
-
     # --- optional visualisation ---
-
-
     robot_state_pub_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -123,11 +121,11 @@ def generate_launch_description():
     return LaunchDescription([
         scene_arg,
         rviz_arg,
-        # mujoco_node,
-        # locomotion_node,
+        mujoco_node,
+        locomotion_node,
+        a2_bridge_node,
         joy_node,
         teleop_node,
-        a2_bridge_node,
         robot_state_pub_node,
         rviz_node,
     ])
