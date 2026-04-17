@@ -5,10 +5,10 @@
 	path = external/unitree_a2_mujoco
 	url = git@github.com:ETHZ-RobotX/unitree_a2_mujoco.git
 [submodule "external/a2_description"]
-	path = external/a2_description
+	path = src/core/a2_description
 	url = git@github.com:ETHZ-RobotX/a2_description.git
 [submodule "external/a2_locomotion_controller"]
-	path = external/a2_locomotion_controller
+	path = src/control/a2_locomotion_controller
 	url = git@github.com:ETHZ-RobotX/a2_locomotion_controller.git
 [submodule "external/unitree_mujoco"]
 	path = external/unitree_mujoco

@@ -2,7 +2,7 @@
 set -e
 
 echo "=== Source Workspace ==="
-bash /a2_ros/setup.sh
+bash /a2_ros/scripts/setup.sh
 
 echo "=== Fix SSH Permissions ==="
 if [ -d /root/.ssh ]; then

@@ -30,22 +30,22 @@ services:
 
       # Repositories
       - type: bind
-        source: ./a2_ros
-        target: /a2_ros/a2_ros
+        source: ./src
+        target: /a2_ros/src
       - type: bind
         source: ./external
         target: /a2_ros/external
 
       # FIXME: Note that changes require container restart for single file mounts
       - type: bind
-        source: ./entrypoint.sh
-        target: /a2_ros/entrypoint.sh
+        source: ./scripts/entrypoint.sh
+        target: /a2_ros/scripts/entrypoint.sh
       - type: bind
-        source: setup.sh
-        target: /a2_ros/setup.sh
+        source: ./scripts/setup.sh
+        target: /a2_ros/scripts/setup.sh
       - type: bind
-        source: install.sh
-        target: /a2_ros/install.sh
+        source: ./scripts/install.sh
+        target: /a2_ros/scripts/install.sh
       - type: bind
         source: ./.git
         target: /a2_ros/.git
@@ -55,7 +55,7 @@ services:
         - /dev/input/js0:/dev/input/js0
     working_dir: /a2_ros
 
-    entrypoint: [ "./entrypoint.sh" ]
+    entrypoint: [ "./scripts/entrypoint.sh" ]
     command: [ "bash" ]
     stdin_open: true
     tty: true
