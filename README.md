@@ -78,7 +78,14 @@ Requires two terminals. Start the simulation first, then the navigation stack.
 ros2 launch a2_ros sim.launch.py scene:=scene_obstacles.xml
 ```
 
-**Terminal 2 — navigation:**
+**Terminal 2 — stand then walk:**
+```bash
+cd src/control/a2_locomotion_controller/scripts
+./control_mode.sh --stand
+./control_mode.sh --walk
+```
+
+**Terminal 3 — navigation:**
 ```bash
 ros2 launch a2_ros navigation.launch.py rviz:=true
 ```
