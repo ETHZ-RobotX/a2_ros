@@ -44,9 +44,19 @@ ament_target_dependencies(teleop_joy
   std_msgs
 )
 
+# nav_vel_relay: converts /nav_vel_cmd (TwistStamped) -> /cmd_vel (Twist)
+add_executable(nav_vel_relay
+  src/nav_vel_relay.cpp
+)
+ament_target_dependencies(nav_vel_relay
+  rclcpp
+  geometry_msgs
+)
+
 install(TARGETS
   stand_example
   teleop_joy
+  nav_vel_relay
   DESTINATION lib/${PROJECT_NAME}
 )
 

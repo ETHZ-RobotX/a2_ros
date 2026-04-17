@@ -16,3 +16,9 @@
 [submodule "external/unitree_ros2"]
 	path = external/unitree_ros2
 	url = https://github.com/unitreerobotics/unitree_ros2.git
+[submodule "external/far_planner"]
+	path = external/far_planner
+	url = git@github.com:ETHZ-RobotX/far_planner.git
+[submodule "external/navigation_ext_ros2"]
+	path = external/navigation_ext_ros2
+	url = git@github.com:ETHZ-RobotX/navigation_ext_ros2.git

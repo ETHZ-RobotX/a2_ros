@@ -31,7 +31,6 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
     description_dir = get_package_share_directory('a2_description')
-    mujoco_dir      = get_package_share_directory('unitree_mujoco')
 
     # ---------- launch arguments ----------
     scene_arg = DeclareLaunchArgument(
@@ -55,7 +54,7 @@ def generate_launch_description():
         package='unitree_mujoco',
         executable='unitree_mujoco',
         output='screen',
-        arguments=[scene_path, mujoco_dir],
+        arguments=['-s', scene_path],
         # MuJoCo resolves mesh paths relative to CWD
         cwd=mjcf_dir,
     )
@@ -64,7 +63,7 @@ def generate_launch_description():
         package='a2_locomotion_controller',
         executable='locomotion_executor',
         output='screen',
-        parameters=[{'use_sim_time': True}],
+        parameters=[{'use_sim_time': False}],
     )
 
     a2_bridge_node = Node(
@@ -95,7 +94,7 @@ def generate_launch_description():
         }]
     )
 
-    # --- optional visualisation ---
+    # --- robot state publisher (always on - needed for TF chain odom->base_link->lidar) ---
     robot_state_pub_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -105,9 +104,9 @@ def generate_launch_description():
             ),
             'use_sim_time': True,
         }],
-        condition=IfCondition(LaunchConfiguration('rviz')),
     )
 
+    # --- optional visualisation ---
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
