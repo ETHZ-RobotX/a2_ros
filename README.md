@@ -39,9 +39,9 @@ ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained R
 ### Inside container
 1. **\[FIRST TIME ONLY\]**: Execute the install script. After the install script completes, you should expect to see a mujoco window. If not, there are X11 forwarding issues.
     ```
-    ./install.sh
+    ./scripts/install.sh
     ```
-1. Source `/a2_ros/setup.sh`
+1. Source `/a2_ros/scripts/setup.sh`
 
 ### Stopping container
 1. Stop the container with `docker compose stop a2_ros_dev`. As
@@ -52,14 +52,14 @@ As long as the container is not recreated (either using `--force-recreate` or `d
 ```bash
 conda deactivate   # repeat until $CONDA_PREFIX is empty
 git clone git@github.com:ETHZ-RobotX/a2_ros.git --recursive
-bash a2_ros/install.sh
+bash a2_ros/scripts/install.sh
 ```
 
 ## Run
 
 Source in every new terminal:
 ```bash
-source a2_ros/setup.sh
+source scripts/setup.sh
 ```
 
 Launch the simulation:
@@ -68,6 +68,22 @@ ros2 launch a2_ros sim.launch.py
 ros2 launch a2_ros sim.launch.py rviz:=true
 ros2 launch a2_ros sim.launch.py scene:=scene_terrain.xml
 ```
+
+## Navigation
+
+Requires two terminals. Start the simulation first, then the navigation stack.
+
+**Terminal 1 — simulation:**
+```bash
+ros2 launch a2_ros sim.launch.py scene:=scene_obstacles.xml
+```
+
+**Terminal 2 — navigation:**
+```bash
+ros2 launch a2_ros navigation.launch.py rviz:=true
+```
+
+Set a 2D Nav Goal in RViz to send the robot to a target pose.
 
 ## Gamepad
 
