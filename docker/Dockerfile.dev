@@ -26,4 +26,4 @@ WORKDIR /a2_ros
 # RUN rosdep update && rosdep install --from-paths src --ignore-src --rosdistro jazzy -y
 RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
 
-COPY install.sh entrypoint.sh setup.sh install.sh /a2_ros
+COPY scripts/install.sh scripts/entrypoint.sh scripts/setup.sh  /a2_ros/scripts/
