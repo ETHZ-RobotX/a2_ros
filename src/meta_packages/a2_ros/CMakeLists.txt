@@ -17,6 +17,9 @@ find_package(unitree_go REQUIRED)
 find_package(unitree_hg REQUIRED)
 find_package(unitree_api REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 # stand_example node (low-level stand/sit transitions)
 add_executable(stand_example
@@ -53,15 +56,29 @@ ament_target_dependencies(nav_vel_relay
   geometry_msgs
 )
 
+add_executable(scan_pose_sync
+  src/scan_pose_sync.cpp
+)
+ament_target_dependencies(scan_pose_sync
+  rclcpp
+  nav_msgs
+  sensor_msgs
+  tf2
+  tf2_ros
+  geometry_msgs
+)
+
 install(TARGETS
   stand_example
   teleop_joy
   nav_vel_relay
+  scan_pose_sync
   DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY
   launch
+  config
   DESTINATION share/${PROJECT_NAME}
 )
 

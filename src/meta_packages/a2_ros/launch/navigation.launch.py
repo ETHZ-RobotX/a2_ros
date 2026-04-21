@@ -41,7 +41,9 @@ from launch_ros.actions import Node, SetParameter
 
 def generate_launch_description():
     description_dir = get_package_share_directory('a2_description')
-    rviz_path = os.path.join(description_dir, 'rviz', 'navigation.rviz')
+    a2_ros_dir      = get_package_share_directory('a2_ros')
+    rviz_path       = os.path.join(description_dir, 'rviz', 'navigation.rviz')
+    far_config      = os.path.join(a2_ros_dir, 'config', 'autonomy', 'far_a2.yaml')
 
     rviz_arg = DeclareLaunchArgument(
         'rviz',
@@ -146,10 +148,7 @@ def generate_launch_description():
             executable='far_planner',
             name='far_planner',
             output='screen',
-            parameters=[{
-                'robot_dim':      0.45,   # A2 body diagonal ~0.45 m (0.65×0.40); SMB default 0.8
-                'vehicle_height': 0.5,    # A2 ~0.5 m tall; SMB default 0.75
-            }],
+            parameters=[far_config],
             remappings=[
                 ('/odom_world',         '/state_estimation'),
                 ('/terrain_cloud',      '/terrain_map_ext'),

@@ -22,3 +22,6 @@
 [submodule "external/navigation_ext_ros2"]
 	path = external/navigation_ext_ros2
 	url = git@github.com:ETHZ-RobotX/navigation_ext_ros2.git
+[submodule "external/tare_planner"]
+	path = external/tare_planner
+	url = git@github.com:ETHZ-RobotX/tare_planner.git
