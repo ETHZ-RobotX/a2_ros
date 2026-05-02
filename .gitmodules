@@ -25,3 +25,6 @@
 [submodule "external/tare_planner"]
 	path = external/tare_planner
 	url = git@github.com:ETHZ-RobotX/tare_planner.git
+[submodule "src/core/a2_sim_utils"]
+	path = src/core/a2_sim_utils
+	url = git@github.com:ETHZ-RobotX/a2_sim_utils.git

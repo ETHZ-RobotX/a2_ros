@@ -10,9 +10,9 @@ Starts the full exploration stack on top of the running sim:
   - nav_vel_relay        : converts /nav_vel_cmd (TwistStamped) -> /cmd_vel (Twist)
 
 Prerequisites (provided by sim.launch.py + a2_bridge):
-  /state_estimation  - ground-truth odometry (published by a2_bridge)
-  /registered_scan   - world-frame lidar cloud (published by a2_bridge)
-  /clock             - sim time clock (published by a2_bridge)
+  /state_estimation  - ground-truth odometry (published by a2_bridge in a2_sim_utils)
+  /registered_scan   - world-frame lidar cloud (published by a2_bridge in a2_sim_utils)
+  /clock             - sim time clock (published by sim_clock in a2_sim_utils)
 
 Usage:
   # Terminal 1
