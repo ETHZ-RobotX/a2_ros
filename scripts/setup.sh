@@ -23,7 +23,7 @@ else
 fi
 
 # --- MuJoCo ---
-export MUJOCO_DIR="${MUJOCO_DIR:-$HOME/.mujoco/mujoco-3.5.0}"
+export MUJOCO_DIR="${MUJOCO_DIR:-/opt/mujoco/mujoco-3.5.0}"
 export LD_LIBRARY_PATH="$MUJOCO_DIR/lib:${LD_LIBRARY_PATH}"
 
 # --- ROS2 middleware ---
