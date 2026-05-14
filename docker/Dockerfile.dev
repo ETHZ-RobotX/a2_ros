@@ -83,9 +83,7 @@ WORKDIR /a2_ros
 RUN python3 -m venv --system-site-packages .venv && \
     .venv/bin/pip install torch numpy
 
-COPY a2_ros /a2_ros/a2_ros
 COPY external /a2_ros/external
-COPY core /a2_ros/core
 COPY scripts /a2_ros/scripts
 COPY src /a2_ros/src
 
