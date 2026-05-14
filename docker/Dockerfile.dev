@@ -1,12 +1,53 @@
 # TODO: This will eventually be moved to ETHZ-RobotX/rss_docker_base once the configuration matures
 ARG ROS_DISTRO=jazzy
+ARG MUJOCO_VERSION=3.5.0
 
-FROM ros:${ROS_DISTRO} AS base
+# Builder image for non-ros dependencies to reduce source code footprint
+FROM ros:$ROS_DISTRO AS builder
+ARG MUJOCO_VERSION
 
 RUN apt-get update && apt-get install -y \
     git \
-    libglfw3-dev \
+    cmake \
+    build-essential \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Unitree SDK2
+RUN git clone --depth=1 https://github.com/unitreerobotics/unitree_sdk2.git
+
+RUN cmake -S unitree_sdk2 -B unitree_sdk2/build \
+    -DCMAKE_INSTALL_PREFIX=/opt/unitree_robotics
+
+RUN cmake --build "unitree_sdk2/build" --target install -- -j"$(nproc)"
+
+# MuJoCo
+RUN mkdir -p /opt/mujoco && \
+    wget -q "https://github.com/google-deepmind/mujoco/releases/download/${MUJOCO_VERSION}/mujoco-${MUJOCO_VERSION}-linux-x86_64.tar.gz" \
+    -O /tmp/mujoco.tar.gz && \
+    tar -xzf /tmp/mujoco.tar.gz -C /opt/mujoco/ && \
+    rm /tmp/mujoco.tar.gz
+
+# ROS Base Image
+FROM ros:${ROS_DISTRO} AS ros
+ARG MUJOCO_VERSION
+
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    wget \
+    python3-pip \
+    python3.12-venv \
+    qtdeclarative5-dev \
+    libopencv-dev \
+    libpcap-dev \
     libx11-dev \
+    libyaml-cpp-dev \
+    libspdlog-dev \
+    libboost-all-dev \
+    libfmt-dev \
+    libglfw3-dev \
     xorg-dev \
     openssh-client \
     ros-jazzy-rmw-cyclonedds-cpp \
@@ -17,13 +58,48 @@ RUN apt-get update && apt-get install -y \
     ros-jazzy-ros2-controllers \
     ros-jazzy-controller-manager \
     ros-jazzy-urdfdom-py \
+    ros-jazzy-joy \
+    ros-jazzy-robot-state-publisher \
+    ros-jazzy-pcl-conversions \
+    ros-jazzy-pcl-ros \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /a2_ros
+RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /root/.bashrc
+
+# empy required by colcon at build time (system Python, not venv)
+RUN python3 -m pip install --break-system-packages "empy==3.3.4"
+
+# Copy artifacts from builder
+COPY --from=builder /opt/unitree_robotics /opt/unitree_robotics
+COPY --from=builder /opt/mujoco /opt/mujoco
+
+ENV MUJOCO_DIR=/opt/mujoco/mujoco-${MUJOCO_VERSION}
+
+# Setup Source Code
+RUN mkdir /a2_ros
 WORKDIR /a2_ros
 
-# TODO: Add back once a2_ros is shipped along with image and rosdep can refer to the a2_ros metapackage
-# RUN rosdep update && rosdep install --from-paths src --ignore-src --rosdistro jazzy -y
-RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
+# Setup and install python venv (--system-site-packages to inherit ROS 2 Python packages)
+RUN python3 -m venv --system-site-packages .venv && \
+    .venv/bin/pip install torch numpy
 
-COPY scripts/install.sh scripts/entrypoint.sh scripts/setup.sh  /a2_ros/scripts/
+COPY external /a2_ros/external
+COPY scripts /a2_ros/scripts
+COPY src /a2_ros/src
+
+# Ignore unitree_ros2 example package (not needed, would fail to build)
+RUN touch external/unitree_ros2/example/COLCON_IGNORE
+
+# Patch Unitree Message Package for latest ROS version
+RUN scripts/patch_unitree.sh
+
+# MuJoCo symlinks required by unitree_mujoco
+RUN ln -sf $MUJOCO_DIR external/unitree_mujoco/simulate/mujoco
+
+# Build workspace
+# unitree_mujoco uses /proc/self/exe to locate its install prefix, so its binary
+# must be physically copied (not symlinked) — build it separately without --symlink-install.
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build --symlink-install --packages-skip unitree_mujoco
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build --packages-select unitree_mujoco
+
+RUN echo "source ${PWD}/scripts/setup.sh" >> /root/.bashrc

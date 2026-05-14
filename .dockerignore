@@ -1,6 +1,5 @@
 # Git
-# TODO: Add this back once install script is fixed to not call submodules
-# .git/
+.git/
 
 # Python venv
 .venv/

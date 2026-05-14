@@ -17,6 +17,7 @@
   <depend>unitree_hg</depend>
   <depend>unitree_api</depend>
   <depend>rosbag2_cpp</depend>
+  <depend>a2_deployment_config</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
