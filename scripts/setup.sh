@@ -26,6 +26,13 @@ fi
 export MUJOCO_DIR="${MUJOCO_DIR:-/opt/mujoco/mujoco-3.5.0}"
 export LD_LIBRARY_PATH="$MUJOCO_DIR/lib:${LD_LIBRARY_PATH}"
 
+# --- MuJoCo symlink required by unitree_mujoco ---
+MUJOCO_SYMLINK="$WORKSPACE_DIR/external/unitree_mujoco/simulate/mujoco"
+if [ ! -L "$MUJOCO_SYMLINK" ]; then
+    ln -sf "$MUJOCO_DIR" "$MUJOCO_SYMLINK"
+    echo "[a2_ros] Created MuJoCo symlink: $MUJOCO_SYMLINK -> $MUJOCO_DIR"
+fi
+
 # --- ROS2 middleware ---
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 export ROS_DOMAIN_ID=1
