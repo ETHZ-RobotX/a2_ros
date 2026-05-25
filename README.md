@@ -3,6 +3,11 @@
 ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained RL locomotion policy.
 
 ## TODOs
+
+> **CRITICAL**
+> - [ ] `pathFollower` / `localPlanner` autonomy mode is overridden to `false` by the joystick node on every `/joy` message (axes[4] < 0.1 at rest). The `autonomyMode: True` launch parameter has no effect while a controller is connected. Either kill `joy_node` before running nav (`ros2 node kill /joy_node`), push the right stick forward to hold axes[4] > 0.1, or patch pathFollower/localPlanner to only respect the joystick override when `joySpeedRaw > 0`.
+> - [ ] Move `registered_scan` publisher out of `a2_sim_utils` into a standalone `a2_utils` node so it can be used with real hardware and DLIO without a sim dependency (see DLIO integration notes below).
+
 - [x] Provide base docker setup for development
 - [x] Move dependency installations from install scripts to docker **Until this time, try not to recreate containers to save time**
 - [x] Decide whether install script should manage git submodules too (and thus lie inside the docker runtime)
