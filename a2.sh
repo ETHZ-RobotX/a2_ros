@@ -67,8 +67,96 @@ EOF
   --dlio)
     ros2 launch a2_ros dlio.launch.py rviz:=$RVIZ
     ;;
+  --init)
+    if ! command -v terminator &>/dev/null; then
+        echo "Error: terminator is not installed. Install with: sudo apt install terminator"
+        exit 1
+    fi
+    D=$(mktemp -d /tmp/a2_init_XXXX)
+
+    # Each init file sources .bashrc then uses the CPR trick to pre-fill the
+    # readline prompt with the command (visible and editable, not yet executed).
+    cat > "$D/1.sh" << 'INITEOF'
+source "$HOME/.bashrc"
+_p() { bind '"\e[0n": "a2 --start"'; printf '\033[5n'; PROMPT_COMMAND=; }
+PROMPT_COMMAND=_p
+INITEOF
+    cat > "$D/2.sh" << 'INITEOF'
+source "$HOME/.bashrc"
+_p() { bind '"\e[0n": "a2 --walk"'; printf '\033[5n'; PROMPT_COMMAND=; }
+PROMPT_COMMAND=_p
+INITEOF
+    cat > "$D/3.sh" << 'INITEOF'
+source "$HOME/.bashrc"
+_p() { bind '"\e[0n": "a2 --nav"'; printf '\033[5n'; PROMPT_COMMAND=; }
+PROMPT_COMMAND=_p
+INITEOF
+    cat > "$D/4.sh" << 'INITEOF'
+source "$HOME/.bashrc"
+_p() { bind '"\e[0n": "a2 --source"'; printf '\033[5n'; PROMPT_COMMAND=; }
+PROMPT_COMMAND=_p
+INITEOF
+
+    cat > "$D/t.cfg" << EOF
+[global_config]
+[keybindings]
+[profiles]
+  [[default]]
+  [[a2_start]]
+    background_color = "#0d1f0d"
+    use_theme_colors = False
+  [[a2_walk]]
+    background_color = "#0d0d1f"
+    use_theme_colors = False
+  [[a2_nav]]
+    background_color = "#1f0d0d"
+    use_theme_colors = False
+  [[a2_source]]
+    background_color = "#1a150d"
+    use_theme_colors = False
+[layouts]
+  [[a2]]
+    [[[window0]]]
+      type = Window
+      parent = ""
+    [[[hpane]]]
+      type = HPaned
+      parent = window0
+      ratio = 0.5
+    [[[vpane_left]]]
+      type = VPaned
+      parent = hpane
+      ratio = 0.5
+    [[[t_start]]]
+      type = Terminal
+      parent = vpane_left
+      command = bash --init-file $D/1.sh
+      profile = a2_start
+    [[[t_walk]]]
+      type = Terminal
+      parent = vpane_left
+      command = bash --init-file $D/2.sh
+      profile = a2_walk
+    [[[vpane_right]]]
+      type = VPaned
+      parent = hpane
+      ratio = 0.5
+    [[[t_nav]]]
+      type = Terminal
+      parent = vpane_right
+      command = bash --init-file $D/3.sh
+      profile = a2_nav
+    [[[t_source]]]
+      type = Terminal
+      parent = vpane_right
+      command = bash --init-file $D/4.sh
+      profile = a2_source
+[plugins]
+EOF
+    terminator --no-dbus -g "$D/t.cfg" -l a2 &
+    ;;
   *)
-    echo "Usage: $0 {--start|--walk|--nav|--exploration|--dlio|--source|--bashrc} [--rviz]"
+    echo "Usage: $0 {--start|--walk|--nav|--exploration|--dlio|--source|--bashrc|--init} [--rviz]"
     echo ""
     echo "  --start        Launch the MuJoCo simulation"
     echo "  --walk         Command the robot to walk (publishes mode=3)"
@@ -77,6 +165,7 @@ EOF
     echo "  --dlio         Launch DLIO LiDAR-inertial odometry"
     echo "  --source       Source the workspace setup"
     echo "  --bashrc       Add the 'a2' shell function to ~/.bashrc"
+    echo "  --init         Open a 4-pane terminator window pre-filled with common commands"
     echo "  --rviz         Open RViz alongside the launch"
     exit 1
     ;;
