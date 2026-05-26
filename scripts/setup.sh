@@ -33,6 +33,7 @@ if [ ! -L "$MUJOCO_SYMLINK" ]; then
     echo "[a2_ros] Created MuJoCo symlink: $MUJOCO_SYMLINK -> $MUJOCO_DIR"
 fi
 
+export USER=root
 # --- ROS2 middleware ---
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 export ROS_DOMAIN_ID=1
