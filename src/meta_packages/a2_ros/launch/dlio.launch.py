@@ -52,10 +52,14 @@ def generate_launch_description():
             dlio_params,
             a2_params,
             {'use_sim_time': True},
+            # Rename the odom frame to 'map' so the navigation stack (terrain_analysis,
+            # local_planner, far_planner) receives /state_estimation in the expected frame.
+            {'frames/odom': 'map'},
         ],
         remappings=[
             ('pointcloud', '/mujoco/front_lidar'),
             ('imu',        '/imu/data'),
+            ('odom',       '/state_estimation'),
             ('map_pose',                        'dlio/odom_node/map_pose'),
             ('map_pose_inverted',               'dlio/odom_node/map_pose_inverted'),
             ('odom',                            'dlio/odom_node/odom'),

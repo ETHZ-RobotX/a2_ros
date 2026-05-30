@@ -14,17 +14,19 @@ fi
 source "$REPO_DIR/scripts/local/setup.sh"
 
 RVIZ=false
+DLIO=false
 CMD=""
 for arg in "$@"; do
   case "$arg" in
     --rviz) RVIZ=true ;;
+    --dlio) DLIO=true ;;
     --*)    CMD="$arg" ;;
   esac
 done
 
 case "$CMD" in
   --start)
-    ros2 launch a2_ros sim.launch.py scene:=scene_maze.xml rviz:=$RVIZ
+    ros2 launch a2_ros sim.launch.py scene:=scene_maze.xml rviz:=$RVIZ dlio:=$DLIO
     ;;
   --source)
     source "$REPO_DIR/scripts/local/setup.sh"
