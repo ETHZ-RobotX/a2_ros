@@ -44,3 +44,6 @@
 	path = external/direct_lidar_inertial_odometry
 	url = git@github.com:leggedrobotics/direct_lidar_inertial_odometry.git
 	branch = feature/ros2_hiking
+[submodule "external/HesaiLidar"]
+	path = external/HesaiLidar
+	url = git@github.com:ETHZ-RobotX/HesaiLidar_ROS_2.0.git
