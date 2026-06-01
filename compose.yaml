@@ -1,48 +1,51 @@
+x-common: &common
+  network_mode: host
+  privileged: true
+  # gpus: all
+  environment:
+    - DISPLAY=${DISPLAY}
+    - QT_X11_NO_MITSHM=1
+  volumes:
+    - type: bind
+      source: /tmp/.X11-unix
+      target: /tmp/.X11-unix
+    - type: bind
+      source: ~/.Xauthority
+      target: /root/.Xauthority
+    - type: bind
+      source: ./src
+      target: /a2_ros/src
+    - type: bind
+      source: ./external
+      target: /a2_ros/external
+    - type: bind
+      source: ./scripts
+      target: /a2_ros/scripts
+    # FIXME: Note that changes require container restart for single file mounts
+    - type: bind
+      source: ./.git
+      target: /a2_ros/.git
+  working_dir: /a2_ros
+  command: [ "bash" ]
+  stdin_open: true
+  tty: true
+
 services:
   a2_ros_dev:
+    <<: *common
     build:
       context: .
       dockerfile: ./docker/Dockerfile.dev
-    # TODO: Explore better managed network setups instead of catch-all host
-    network_mode: host
-    privileged: true
-    # gpus: all
-
-    environment:
-      - DISPLAY=${DISPLAY}
-      - QT_X11_NO_MITSHM=1
-
-    volumes:
-      # X11 socket for GUI
-      - type: bind
-        source: /tmp/.X11-unix
-        target: /tmp/.X11-unix
-
-      # Optional: share home configs
-      - type: bind
-        source: ~/.Xauthority
-        target: /root/.Xauthority
-
-      # Repositories
-      - type: bind
-        source: ./src
-        target: /a2_ros/src
-      - type: bind
-        source: ./external
-        target: /a2_ros/external
-      - type: bind
-        source: ./scripts
-        target: /a2_ros/scripts
-
-      # FIXME: Note that changes require container restart for single file mounts
-      - type: bind
-        source: ./.git
-        target: /a2_ros/.git
-
+      target: sim
     devices:
-      # Added a joystick device
       - /dev/input/js0:/dev/input/js0
-    working_dir: /a2_ros
-    command: [ "bash" ]
-    stdin_open: true
-    tty: true
+
+  a2_ros_robot:
+    <<: *common
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.dev
+      target: robot
+    # Intentionally left out until we start testing on the robot
+    # devices:
+    #   - /dev/input/js0:/dev/input/js0

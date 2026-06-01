@@ -28,3 +28,6 @@
 [submodule "src/core/a2_sim_utils"]
 	path = src/core/a2_sim_utils
 	url = git@github.com:ETHZ-RobotX/a2_sim_utils.git
+[submodule "external/HesaiLidar"]
+	path = external/HesaiLidar
+	url = git@github.com:ETHZ-RobotX/HesaiLidar_ROS_2.0.git

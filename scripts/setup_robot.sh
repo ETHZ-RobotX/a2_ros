@@ -14,7 +14,7 @@ fi
 
 # --- ROS2 middleware ---
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export CYCLONEDDS_URI="${WORKSPACE_DIR}/core/a2_deployment_config/config/cyclonedds.xml"
+export CYCLONEDDS_URI="${WORKSPACE_DIR}/src/core/a2_deployment_config/config/cyclonedds.xml"
 
 echo "[a2_ros] Robot Setup."
 echo "[a2_ros] ROS_DOMAIN_ID=$ROS_DOMAIN_ID  RMW=$RMW_IMPLEMENTATION CYCLONEDDS_URI=$CYCLONEDDS_URI"

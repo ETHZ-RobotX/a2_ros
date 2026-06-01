@@ -81,7 +81,7 @@ WORKDIR /a2_ros
 
 # Setup and install python venv (--system-site-packages to inherit ROS 2 Python packages)
 RUN python3 -m venv --system-site-packages .venv && \
-    .venv/bin/pip install torch numpy
+    .venv/bin/pip install --no-cache-dir numpy
 
 COPY external /a2_ros/external
 COPY scripts /a2_ros/scripts
@@ -89,6 +89,8 @@ COPY src /a2_ros/src
 
 # Ignore unitree_ros2 example package (not needed, would fail to build)
 RUN touch external/unitree_ros2/example/COLCON_IGNORE
+# Ignore HesaiLidar package in simulation
+RUN touch external/HesaiLidar/COLCON_IGNORE
 
 # Patch Unitree Message Package for latest ROS version
 RUN scripts/patch_unitree.sh
@@ -100,6 +102,25 @@ RUN ln -sf $MUJOCO_DIR external/unitree_mujoco/simulate/mujoco
 # unitree_mujoco uses /proc/self/exe to locate its install prefix, so its binary
 # must be physically copied (not symlinked) — build it separately without --symlink-install.
 RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build --symlink-install --packages-skip unitree_mujoco
-RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build --packages-select unitree_mujoco
 
+################################################################################
+# Sim/Development Stage.                                                       #
+# This version is used to test locally.                                        #
+# TODO: Move other mujoco dependencies here if needed                          #
+# On the other hand, it might be nice to also have mujoco on the robot         #
+################################################################################
+FROM ros AS sim
+
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build --packages-select unitree_mujoco
 RUN echo "source ${PWD}/scripts/setup.sh" >> /root/.bashrc
+
+################################################################################
+# Robot Builder Stage.                                                         #
+# This version is deployed to the robot                                        #
+################################################################################
+FROM ros AS robot
+
+# Allow HesaiLidar package to build for robot
+RUN rm external/HesaiLidar/COLCON_IGNORE
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build --packages-select hesai_ros_driver
+RUN echo "source ${PWD}/scripts/setup_robot.sh" >> /root/.bashrc
