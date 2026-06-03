@@ -5,6 +5,7 @@ Starts:
   - locomotion_executor : RL policy node (subscribes /lowstate + /mode + /cmd_vel,
                                            publishes /lowcmd)
   - joint_states_pub    : republishes /lowstate motor positions as /joint_states
+  - imu_pub             : republishes /lowstate IMU as /imu/data (needed by DLIO)
   - joy_node            : reads gamepad from /dev/input/js0
   - teleop_joy          : maps gamepad axes/buttons to /cmd_vel and /mode
 
@@ -55,6 +56,13 @@ def generate_launch_description():
         parameters=[{'use_sim_time': False}],
     )
 
+    imu_node = Node(
+        package='a2_utils',
+        executable='imu_pub',
+        output='screen',
+        parameters=[{'use_sim_time': False}],
+    )
+
     joy_node = Node(
         package='joy',
         executable='joy_node',
@@ -99,10 +107,11 @@ def generate_launch_description():
 
     return LaunchDescription([
         rviz_arg,
-        locomotion_node,
+        # locomotion_node,
         joint_states_node,
-        joy_node,
-        teleop_node,
+        imu_node,
+        # joy_node,
+        # teleop_node,
         robot_state_pub_node,
         rviz_node,
     ])
