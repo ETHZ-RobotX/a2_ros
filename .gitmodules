@@ -47,3 +47,6 @@
 [submodule "external/HesaiLidar"]
 	path = external/HesaiLidar
 	url = git@github.com:ETHZ-RobotX/HesaiLidar_ROS_2.0.git
+[submodule "src/core/a2_utils"]
+	path = src/core/a2_utils
+	url = git@github.com:ETHZ-RobotX/a2_utils.git
