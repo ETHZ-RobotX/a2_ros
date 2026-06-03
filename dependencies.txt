@@ -1,1 +1,1 @@
-sudo apt install ros-jazzy-joint-state-publisher-gui
+sudo apt install ros-humble-joint-state-publisher-gui

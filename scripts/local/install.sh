@@ -55,9 +55,9 @@ git -C "$REPO_DIR" submodule update --init --recursive
 info "Checking system packages..."
 PKGS=(
     build-essential cmake git wget python3.12-venv
-    ros-jazzy-joy ros-jazzy-robot-state-publisher ros-jazzy-rviz2
-    ros-jazzy-rmw-cyclonedds-cpp
-    ros-jazzy-joint-state-publisher-gui
+    ros-humble-joy ros-humble-robot-state-publisher ros-humble-rviz2
+    ros-humble-rmw-cyclonedds-cpp
+    ros-humble-joint-state-publisher-gui
     libyaml-cpp-dev libspdlog-dev libboost-all-dev libfmt-dev libglfw3-dev
 )
 MISSING=()
@@ -206,8 +206,13 @@ info "Checking Python packages in venv..."
 # Venv must NOT be active here — colcon needs system Python.
 # ---------------------------------------------------------------
 info "Building workspace..."
+<<<<<<< Updated upstream
 source /opt/ros/jazzy/setup.bash
 cd "$REPO_DIR"
+=======
+source /opt/ros/humble/setup.bash
+cd "$SCRIPT_DIR/.."
+>>>>>>> Stashed changes
 # unitree_mujoco uses /proc/self/exe to locate its install prefix, so its binary
 # must be physically copied (not symlinked) — build it separately without --symlink-install.
 colcon build --symlink-install --packages-skip unitree_mujoco

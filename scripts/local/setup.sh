@@ -5,7 +5,7 @@
 SCRIPT_DIR=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
 
 # --- ROS2 ---
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/humble/setup.bash
 
 # --- Workspace install ---
 if [ -f "$SCRIPT_DIR/../../install/setup.bash" ]; then
