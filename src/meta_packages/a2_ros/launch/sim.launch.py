@@ -5,7 +5,8 @@ Starts:
   - a2_mujoco            : MuJoCo physics simulator (publishes /lowstate, subscribes /lowcmd)
   - locomotion_controller: RL policy node (subscribes /lowstate + /mode + /cmd_vel,
                                             publishes /lowcmd)
-  - a2_bridge            : republishes /lowstate as /joint_states, /imu/data, /state_estimation
+  - a2_bridge            : republishes /lowstate as /imu/data, /odom, /state_estimation; broadcasts TF
+  - joint_states_pub     : republishes /lowstate motor positions as /joint_states
   - registered_scan_pub  : transforms /mujoco/front_lidar into map frame → /registered_scan
   - joy_node             : reads gamepad from /dev/input/js0
   - teleop_joy           : maps gamepad axes/buttons to /cmd_vel and /mode
@@ -104,6 +105,13 @@ def generate_launch_description():
         condition=IfCondition(dlio),
     )
 
+    joint_states_node = Node(
+        package='a2_utils',
+        executable='joint_states_pub',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
+    )
+
     # Transforms raw LiDAR into map frame → /registered_scan.
     # Works regardless of TF source (ground-truth or DLIO).
     registered_scan_node = Node(
@@ -169,6 +177,7 @@ def generate_launch_description():
         locomotion_node,
         a2_bridge_node,
         a2_bridge_dlio,
+        joint_states_node,
         registered_scan_node,
         joy_node,
         teleop_node,
