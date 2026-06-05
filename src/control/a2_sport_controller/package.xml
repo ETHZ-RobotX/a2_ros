@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<?xml-model href="" schematypens=""?>
+<package format="3">
+  <name>a2_sport_controller</name>
+  <version>0.0.0</version>
+  <description>Uniree ROS2 Sport Controller</description>
+  <maintainer email="44103483+rbharadwaj9@users.noreply.github.com">Rajiv Bharadwaj</maintainer>
+  <license>BSD 3-Clause License</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclpy</depend>
+  <depend>unitree_api</depend>
+  <depend>a2_interfaces</depend>
+  <depend>geometry_msgs</depend>
+  <depend>ament_index_cpp</depend>
+  <depend>ament_index_python</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
