@@ -32,6 +32,17 @@ RUN mkdir -p /opt/mujoco && \
 FROM ros:${ROS_DISTRO} AS ros
 ARG MUJOCO_VERSION
 
+# Replace DEB822-format ROS apt source with the traditional list format so that
+# packages like ros-jazzy-cv-bridge resolve correctly on all Ubuntu Noble mirrors.
+RUN rm -f /etc/apt/sources.list.d/ros2.sources && \
+    apt-get update && apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+        -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" \
+        > /etc/apt/sources.list.d/ros2.list
+
 RUN apt-get update && apt-get install -y \
     git \
     cmake \
@@ -62,6 +73,7 @@ RUN apt-get update && apt-get install -y \
     ros-jazzy-robot-state-publisher \
     ros-jazzy-pcl-conversions \
     ros-jazzy-pcl-ros \
+    ros-jazzy-cv-bridge \
     && rm -rf /var/lib/apt/lists/*
 
 RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /root/.bashrc
@@ -86,6 +98,9 @@ RUN python3 -m venv --system-site-packages .venv && \
 COPY external /a2_ros/external
 COPY scripts /a2_ros/scripts
 COPY src /a2_ros/src
+
+# Install object detection Python dependencies into the venv
+RUN .venv/bin/pip install -r src/object_detection/requirements.txt
 
 # Ignore unitree_ros2 example package (not needed, would fail to build)
 RUN touch external/unitree_ros2/example/COLCON_IGNORE
