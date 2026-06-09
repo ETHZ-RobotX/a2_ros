@@ -15,7 +15,7 @@
 	url = git@github.com:ETHZ-RobotX/unitree_mujoco.git
 [submodule "external/unitree_ros2"]
 	path = external/unitree_ros2
-	url = https://github.com/unitreerobotics/unitree_ros2.git
+	url = git@github.com:ETHZ-RobotX/unitree_ros2.git
 [submodule "external/far_planner"]
 	path = external/far_planner
 	url = git@github.com:ETHZ-RobotX/far_planner.git
