@@ -1,0 +1,9 @@
+build:
+  symlink-install: true
+  build-base: /a2_ros/build
+  install-base: /a2_ros/install
+  base-paths:
+    - "/a2_ros"
+  packages-ignore:
+    - hesai_ros_driver
+    - unitree_ros2_example

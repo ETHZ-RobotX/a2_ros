@@ -1,0 +1,186 @@
+# syntax=docker/dockerfile:1
+ARG ROS_DISTRO=jazzy
+ARG MUJOCO_VERSION=3.5.0
+ARG USER=ubuntu # Default provided
+ARG UID=1000 # Default provided
+
+# Builder image for non-ros dependencies to reduce source code footprint
+FROM ros:$ROS_DISTRO AS builder
+ARG MUJOCO_VERSION
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    wget
+
+# Unitree SDK2
+RUN git clone --depth=1 https://github.com/unitreerobotics/unitree_sdk2.git
+
+RUN cmake -S unitree_sdk2 -B unitree_sdk2/build \
+    -DCMAKE_INSTALL_PREFIX=/opt/unitree_robotics
+
+RUN cmake --build "unitree_sdk2/build" --target install -- -j"$(nproc)"
+
+# MuJoCo
+RUN mkdir -p /opt/mujoco && \
+    wget -q "https://github.com/google-deepmind/mujoco/releases/download/${MUJOCO_VERSION}/mujoco-${MUJOCO_VERSION}-linux-x86_64.tar.gz" \
+    -O /tmp/mujoco.tar.gz && \
+    tar -xzf /tmp/mujoco.tar.gz -C /opt/mujoco/ && \
+    rm /tmp/mujoco.tar.gz
+
+################################################################################
+# ROS Base Image with Dev Tools                                                #
+# Adds shell UX (oh-my-bash, fzf, completions) on top of the ROS base.         #
+################################################################################
+FROM ros:${ROS_DISTRO} AS ros_dev_tools
+ARG ROS_DISTRO
+ARG USER
+ENV USER=${USER:-ubuntu}
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    wget \
+    bash-completion \
+    python3-argcomplete
+
+COPY environment/shell/.bashrc /home/$USER/.bashrc
+RUN chown -R $USER:$USER /home/$USER/.bashrc
+
+RUN git clone --depth=1 https://github.com/ohmybash/oh-my-bash.git /home/$USER/.oh-my-bash && \
+    chown -R $USER:$USER /home/$USER/.oh-my-bash
+RUN git clone --depth=1 https://github.com/junegunn/fzf.git /home/$USER/.fzf && \
+    HOME=/home/$USER /home/$USER/.fzf/install --all --no-update-rc && \
+    chown -R $USER:$USER /home/$USER/.fzf
+
+# Persistent history directory — mounted as a named volume in compose.yaml
+RUN mkdir -p /home/$USER/.bash_history_dir && \
+    chown $USER:$USER /home/$USER/.bash_history_dir && \
+    touch /home/$USER/.sudo_as_admin_successful && \
+    chown $USER:$USER /home/$USER/.sudo_as_admin_successful
+
+RUN echo "[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> /home/$USER/.bashrc && \
+    echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /home/$USER/.bashrc && \
+    echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> /home/$USER/.bashrc \
+    echo "export _colcon_cd_root=/opt/ros/$ROS_DISTRO/" >> /home/$USER/.bashrc \
+    echo 'eval "$(register-python-argcomplete ros2)" 2>/dev/null || true' >> /home/$USER/.bashrc
+
+USER $USER
+
+################################################################################
+# A2 Base Image                                                                #
+# Provides all packages for a base workspace install for A2                    #
+# Built on top of the ROS image with dev tools                                 #
+################################################################################
+FROM ros_dev_tools AS a2_base
+ARG ROS_DISTRO
+ARG USER
+ENV USER=${USER:-ubuntu}
+ARG UID
+
+# For installs
+USER root
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    python3-pip \
+    python3.12-venv \
+    qtdeclarative5-dev \
+    libopencv-dev \
+    libpcap-dev \
+    libx11-dev \
+    libyaml-cpp-dev \
+    libspdlog-dev \
+    libboost-all-dev \
+    libfmt-dev \
+    libglfw3-dev \
+    xorg-dev \
+    openssh-client \
+    ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
+    ros-${ROS_DISTRO}-urdf \
+    ros-${ROS_DISTRO}-xacro \
+    ros-${ROS_DISTRO}-rviz2 \
+    ros-${ROS_DISTRO}-ros2-control \
+    ros-${ROS_DISTRO}-ros2-controllers \
+    ros-${ROS_DISTRO}-controller-manager \
+    ros-${ROS_DISTRO}-urdfdom-py \
+    ros-${ROS_DISTRO}-joy \
+    ros-${ROS_DISTRO}-robot-state-publisher \
+    ros-${ROS_DISTRO}-pcl-conversions \
+    ros-${ROS_DISTRO}-pcl-ros \
+    ros-${ROS_DISTRO}-cv-bridge
+
+# empy required by colcon at build time (system Python, not venv)
+RUN python3 -m pip install --break-system-packages "empy==3.3.4"
+
+# Setup workspace
+RUN mkdir -p /a2_ros/build /a2_ros/install && \
+    chown -R $USER:$USER /a2_ros
+WORKDIR /a2_ros
+
+# Setup and install python venv (--system-site-packages to inherit ROS 2 Python packages)
+RUN python3 -m venv --system-site-packages .venv && \
+    .venv/bin/pip install --no-cache-dir numpy
+
+COPY --chown=$USER:$USER external /a2_ros/external
+COPY --chown=$USER:$USER scripts /a2_ros/scripts
+COPY --chown=$USER:$USER src /a2_ros/src
+COPY --chown=$USER:$USER environment /a2_ros/environment
+
+USER $USER
+
+################################################################################
+# Development Stage. Builds simulation                                         #
+# This version is used to test locally.                                        #
+################################################################################
+FROM a2_base AS dev
+ARG ROS_DISTRO
+ARG MUJOCO_VERSION
+ARG USER
+ENV USER=${USER:-ubuntu}
+
+# Copy Unitree SDK from Builder
+COPY --from=builder /opt/unitree_robotics /opt/unitree_robotics
+
+# MuJoCo artifacts from Builder required by unitree_mujoco
+USER root
+ENV MUJOCO_DIR=/opt/mujoco/mujoco-${MUJOCO_VERSION}
+COPY --from=builder /opt/mujoco /opt/mujoco
+RUN ln -sf $MUJOCO_DIR external/unitree_mujoco/simulate/mujoco
+
+# Install object detection Python dependencies into the venv
+RUN --mount=type=cache,target=/root/.cache/pip \
+    .venv/bin/pip install -r src/object_detection/requirements.txt
+
+USER $USER
+
+# Set default package manifest for simulation
+ENV COLCON_DEFAULTS_FILE=/a2_ros/environment/colcon/sim.defaults.yaml
+
+# Build workspace
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
+RUN echo "source ${PWD}/scripts/setup.sh" >> /home/$USER/.bashrc
+
+################################################################################
+# Robot Builder Stage.                                                         #
+# This version is deployed to the robot                                        #
+################################################################################
+FROM a2_base AS robot
+ARG ROS_DISTRO
+ARG MUJOCO_VERSION
+ARG USER
+ENV USER=${USER:-ubuntu}
+
+# Set default package manifest for robot
+ENV COLCON_DEFAULTS_FILE=/a2_ros/environment/colcon/robot.defaults.yaml
+
+# Build workspace
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
+RUN echo "source ${PWD}/scripts/setup_robot.sh" >> /home/$USER/.bashrc

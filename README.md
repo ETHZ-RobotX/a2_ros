@@ -8,11 +8,11 @@ ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained R
 - [x] Decide whether install script should manage git submodules too (and thus lie inside the docker runtime)
 - [x] Remove interactive components of install script
 - [x] Ship `a2_ros` source code with built image
-- [ ] Setup docker managed volumes for build artifacts (also requires deciding how to organize these)
+- [x] Setup docker managed volumes for build artifacts (also requires deciding how to organize these)
 - [ ] Setup docker managed volumes for data artifacts (rosbags, pytorch models etc.)(also requires deciding how to organize these)
 - [ ] Remove all source code from meta-package `a2_ros` and only maintain dependencies
-- [ ] Add source folders for each subsystem `core/ sim/` etc.
-- [ ] Install other third party drivers related to lidars and other peripherals.
+- [x] Add source folders for each subsystem `core/ sim/` etc.
+- [x] Install other third party drivers related to lidars and other peripherals.
 
 ## Setup with Docker
 

@@ -10,6 +10,3 @@ install/
 log/
 *.pyc
 __pycache__/
-
-# Docker related
-docker/

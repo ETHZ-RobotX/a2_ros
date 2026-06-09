@@ -5,47 +5,132 @@ x-common: &common
   environment:
     - DISPLAY=${DISPLAY}
     - QT_X11_NO_MITSHM=1
-  volumes:
-    - type: bind
-      source: /tmp/.X11-unix
-      target: /tmp/.X11-unix
-    - type: bind
-      source: ~/.Xauthority
-      target: /root/.Xauthority
-    - type: bind
-      source: ./src
-      target: /a2_ros/src
-    - type: bind
-      source: ./external
-      target: /a2_ros/external
-    - type: bind
-      source: ./scripts
-      target: /a2_ros/scripts
-    # FIXME: Note that changes require container restart for single file mounts
-    - type: bind
-      source: ./.git
-      target: /a2_ros/.git
   working_dir: /a2_ros
   command: [ "bash" ]
   stdin_open: true
   tty: true
 
+# Individual bind-mount anchors so services can compose their own volume lists
+x-vol-x11: &vol-x11
+  type: bind
+  source: /tmp/.X11-unix
+  target: /tmp/.X11-unix
+x-vol-xauth: &vol-xauth
+  type: bind
+  source: ~/.Xauthority
+  target: /home/${USER}/.Xauthority
+x-vol-src: &vol-src
+  type: bind
+  source: ./src
+  target: /a2_ros/src
+x-vol-external: &vol-external
+  type: bind
+  source: ./external
+  target: /a2_ros/external
+x-vol-scripts: &vol-scripts
+  type: bind
+  source: ./scripts
+  target: /a2_ros/scripts
+x-vol-environment: &vol-environment
+  type: bind
+  source: ./environment
+  target: /a2_ros/environment
+x-vol-git: &vol-git
+  # FIXME: Note that changes require container restart for single file mounts
+  type: bind
+  source: ./.git
+  target: /a2_ros/.git
+x-vol-bags: &vol-bags
+  # ROS bags — bind mount so bags are accessible from the host.
+  # Override ROS_BAGS_DIR in a .env file to point at your archive directory.
+  type: bind
+  source: ${ROS_BAGS_DIR:-./bags}
+  target: /a2_ros/bags
+
 services:
+  a2_base:
+    <<: *common
+    build:
+      context: .
+      dockerfile: ./environment/Dockerfile.dev
+      target: a2_base
+    volumes:
+      - *vol-x11
+      - *vol-xauth
+      - *vol-src
+      - *vol-external
+      - *vol-scripts
+      - *vol-environment
+      - *vol-git
+      - *vol-bags
+
   a2_ros_dev:
     <<: *common
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.dev
-      target: sim
+      dockerfile: ./environment/Dockerfile.dev
+      target: dev
     devices:
       - /dev/input/js0:/dev/input/js0
+    volumes:
+      - *vol-x11
+      - *vol-xauth
+      - *vol-src
+      - *vol-external
+      - *vol-scripts
+      - *vol-environment
+      - *vol-git
+      - *vol-bags
+      - type: volume
+        source: dev_bash_history
+        target: /home/${USER}/.bash_history_dir
+      - type: volume
+        source: dev_colcon_build
+        target: /a2_ros/build
+      - type: volume
+        source: dev_colcon_install
+        target: /a2_ros/install
+      - type: volume
+        source: dev_rosdep_cache
+        target: /home/${USER}/.ros
 
   a2_ros_robot:
     <<: *common
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.dev
+      dockerfile: ./environment/Dockerfile.dev
       target: robot
     # Intentionally left out until we start testing on the robot
     # devices:
     #   - /dev/input/js0:/dev/input/js0
+    volumes:
+      - *vol-x11
+      - *vol-xauth
+      - *vol-src
+      - *vol-external
+      - *vol-scripts
+      - *vol-environment
+      - *vol-git
+      - *vol-bags
+      - type: volume
+        source: robot_bash_history
+        target: /home/${USER}/.bash_history_dir
+      - type: volume
+        source: robot_colcon_build
+        target: /a2_ros/build
+      - type: volume
+        source: robot_colcon_install
+        target: /a2_ros/install
+      - type: volume
+        source: robot_rosdep_cache
+        target: /home/${USER}/.ros
+
+volumes:
+  dev_bash_history:
+  dev_colcon_build:
+  dev_colcon_install:
+  dev_rosdep_cache:
+  robot_bash_history:
+  robot_colcon_build:
+  robot_colcon_install:
+  robot_rosdep_cache:
