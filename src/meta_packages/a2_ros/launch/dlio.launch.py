@@ -55,8 +55,14 @@ def generate_launch_description():
         description='true: simulation (MuJoCo lidar + sim time). false: real robot (Hesai lidar + wall time).'
     )
     rviz_arg = DeclareLaunchArgument('rviz', default_value='false', description='Launch RViz with DLIO config')
+    output_dir_arg = DeclareLaunchArgument(
+        'output_dir',
+        default_value='/tmp/a2_dlio_run',
+        description='Directory for run_stats output and /save_pcd. Defaults under /tmp.'
+    )
 
-    sim = LaunchConfiguration('sim')
+    sim        = LaunchConfiguration('sim')
+    output_dir = LaunchConfiguration('output_dir')
 
     dlio_yaml   = PathJoinSubstitution([dlio_pkg, 'cfg', 'dlio.yaml'])
     dlio_params = PathJoinSubstitution([dlio_pkg, 'cfg', 'params.yaml'])
@@ -111,10 +117,37 @@ def generate_launch_description():
         package='direct_lidar_inertial_odometry',
         executable='dlio_odom_node',
         output='screen',
-        parameters=[*_dlio_base_params, {'use_sim_time': False}],
+        parameters=[
+            *_dlio_base_params,
+            {
+                'use_sim_time': False,
+                'dynamic_filter/enabled': False,
+                'dynamic_filter/max_range': 10.0,
+                'dynamic_filter/warmup_scans': 10,
+                'dynamic_filter/static_window_scans': 8,
+                'dynamic_filter/force_removed_cloud_output': True,
+                'dynamic_filter/m_detector/min_history_votes': 4,
+                'dynamic_filter/m_detector/case_depth_margin': 0.25,
+                'dynamic_filter/m_detector/map_consistency_depth': 0.40,
+                'dynamic_filter/m_detector/min_cluster_points': 120,
+                'dynamic_filter/m_detector/min_track_cluster_points': 240,
+                'dynamic_filter/m_detector/max_cluster_extent': 2.2,
+                'dynamic_filter/m_detector/max_assoc_distance': 0.6,
+                'dynamic_filter/m_detector/track_confirm_hits': 3,
+                'dynamic_filter/m_detector/track_ttl_scans': 8,
+                'dynamic_filter/m_detector/static_veto_ratio': 0.10,
+                'map/crop/enabled': False,
+                'run_stats/enabled': True,
+                'run_stats/output_dir': output_dir,
+                'run_stats/overwrite': True,
+                'run_stats/plot_on_shutdown': True,
+                'run_stats/plot_dpi': 600,
+            },
+        ],
         remappings=[
             ('pointcloud', '/front_lidar/points'),
-            ('imu',        '/imu/data'),
+            ('imu',        '/front_lidar/imu'),
+            ('dynamic_removed', 'dlio/odom_node/pointcloud/dynamic_removed'),
             *_DLIO_REMAPS_COMMON,
         ],
         respawn=True,
@@ -125,10 +158,19 @@ def generate_launch_description():
         package='direct_lidar_inertial_odometry',
         executable='dlio_map_node',
         output='screen',
-        parameters=[*_dlio_base_params, {'use_sim_time': False}],
+        parameters=[
+            *_dlio_base_params,
+            {
+                'use_sim_time': False,
+                'map/crop/enabled': False,
+                'map/save_dynamic_removed/enabled': True,
+            },
+        ],
         remappings=[
-            ('kf_cloud', 'dlio/odom_node/pointcloud/keyframe'),
-            ('map_pose', 'dlio/odom_node/map_pose'),
+            ('kf_cloud',        'dlio/odom_node/pointcloud/keyframe'),
+            ('map_pose',        'dlio/odom_node/map_pose'),
+            ('map',             'dlio/map_node/map'),
+            ('dynamic_removed', 'dlio/odom_node/pointcloud/dynamic_removed'),
         ],
         respawn=True,
         condition=UnlessCondition(sim),
@@ -146,10 +188,11 @@ def generate_launch_description():
     return LaunchDescription([
         sim_arg,
         rviz_arg,
+        output_dir_arg,
         dlio_odom_sim,
         dlio_map_sim,
         # hesai_node,
         dlio_odom_real,
-        dlio_map_real,
+        # dlio_map_real,
         rviz_node,
     ])

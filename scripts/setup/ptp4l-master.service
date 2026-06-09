@@ -1,0 +1,16 @@
+[Unit]
+Description=PTP4L - Precision Time Protocol (Master Mode)
+After=sys-subsystem-net-devices-net1.device
+Requires=sys-subsystem-net-devices-net1.device
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/sbin/ptp4l -m -4 -i net1 -S --step_threshold=1
+Restart=on-failure
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

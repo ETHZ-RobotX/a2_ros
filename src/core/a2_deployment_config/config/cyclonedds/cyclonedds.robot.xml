@@ -6,6 +6,13 @@
                 <NetworkInterface name="eth0" priority="default" multicast="default" />
             </Interfaces>
             <AllowMulticast>spdp</AllowMulticast>
+            <MaxMessageSize>65500B</MaxMessageSize>
         </General>
+        <Internal>
+          <SocketReceiveBufferSize min="0.2MB"/>
+          <Watermarks>
+            <WhcHigh>500kB</WhcHigh>
+          </Watermarks>
+        </Internal>
     </Domain>
 </CycloneDDS>

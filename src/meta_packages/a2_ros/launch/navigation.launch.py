@@ -47,14 +47,14 @@ def generate_launch_description():
 
     rviz_arg = DeclareLaunchArgument(
         'rviz',
-        default_value='true',
+        default_value='false',
         description='Launch RViz2 with navigation config'
     )
 
     nodes = [
         rviz_arg,
         # Use sim time for all navigation nodes
-        SetParameter(name='use_sim_time', value=True),
+        SetParameter(name='use_sim_time', value=False),
 
         # ---- terrain analysis (local map) ----
         Node(
@@ -148,6 +148,10 @@ def generate_launch_description():
             executable='far_planner',
             name='far_planner',
             output='screen',
+            # Run headless: no X display in container/SSH, so force Qt offscreen
+            # to avoid the xcb plugin aborting (SIGABRT). Planning still works;
+            # use RViz instead of the FAR Planner GUI for visualization.
+            additional_env={'QT_QPA_PLATFORM': 'offscreen'},
             parameters=[far_config],
             remappings=[
                 ('/odom_world',         '/state_estimation'),
@@ -164,6 +168,18 @@ def generate_launch_description():
             name='nav_vel_relay',
             output='screen',
         ),
+        
+        # Node(
+        #     package='a2_utils',
+        #     executable='registered_scan_pub',
+        #     output='screen',
+        #     parameters=[{
+        #         'use_sim_time': False,
+        #         'input_topic':  '/front_lidar/points',
+        #         'target_frame': 'map',
+        #         'tf_lag_sec':   0.025,
+        #     }],
+        # ),
 
         # ---- RViz with navigation config ----
         Node(

@@ -1,0 +1,15 @@
+[Unit]
+Description=One-shot NTP time synchronization (disable NTP afterwards for PTP)
+DefaultDependencies=no
+After=network-online.target
+Wants=network-online.target
+Before=ptp4l-master.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/ntp-sync-once
+ExecStart=/usr/local/sbin/ntp-sync-once
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
