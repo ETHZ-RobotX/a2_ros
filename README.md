@@ -39,26 +39,13 @@ ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained R
 
 ### Inside container
 1. The ROS environment is already sourced when starting up a bash shell. Use the `/a2_ros/scripts/setup.sh` for refreshing the workspace
+2. **NOTE**: Since the build artifacts are cached for speed, cleaning up the workspace requires: `rm -rf build/* install/*` instead of deleting the directories.
 
 ### Stopping container
 1. Stop the container with `docker compose stop a2_ros_dev`.
 2. Remove all resources (if required) with `docker compose down`
 
-## Setup - LEFT FOR COMPATIBILITY
-
-```bash
-conda deactivate   # repeat until $CONDA_PREFIX is empty
-git clone git@github.com:ETHZ-RobotX/a2_ros.git --recursive
-bash a2_ros/scripts/local/install.sh
-```
-
-## Run
-
-Source in every new terminal:
-```bash
-source a2_ros/scripts/local/setup.sh
-```
-
+## Launching Subsystems
 Launch the simulation:
 ```bash
 ros2 launch a2_ros sim.launch.py
@@ -99,6 +86,14 @@ Set a 2D Nav Goal in RViz to send the robot to a target pose.
 | Triangle + L2 | Stand |
 | L2 + R2 | Walk |
 
-### Development
 
-The docker setup is currently fully volume mounted. The image does not ship with the `a2_ros` workspace but will eventually do so.
+### Development
+Development happens with the `a2_ros_dev` docker compose service. This contains all dependencies to run the stack in simulation along with object detection.
+
+To speed up development, many artifacts are cached using docker volumes. This includes the colcon build artifacts.
+
+#### Cleaning the ROS Workspace
+Since the build artifacts are also a volume, the folders cannot be deleted. However, their contents can be deleted.
+```bash
+$ rm -rf build/* install/* log
+```
