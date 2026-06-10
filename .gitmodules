@@ -56,3 +56,6 @@
 [submodule "external/resple"]
 	path = external/resple
 	url = git@github.com:ASIG-X/RESPLE.git
+[submodule "external/gscam2"]
+	path = external/gscam2
+	url = https://github.com/clydemcqueen/gscam2.git
