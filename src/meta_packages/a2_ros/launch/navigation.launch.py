@@ -169,17 +169,17 @@ def generate_launch_description():
             output='screen',
         ),
         
-        # Node(
-        #     package='a2_utils',
-        #     executable='registered_scan_pub',
-        #     output='screen',
-        #     parameters=[{
-        #         'use_sim_time': False,
-        #         'input_topic':  '/front_lidar/points',
-        #         'target_frame': 'map',
-        #         'tf_lag_sec':   0.025,
-        #     }],
-        # ),
+        Node(
+            package='a2_utils',
+            executable='registered_scan_pub',
+            output='screen',
+            parameters=[{
+                'use_sim_time': False,
+                'input_topic':  '/front_lidar/points',
+                'target_frame': 'map',
+                'tf_lag_sec':   0.005,
+            }],
+        ),
 
         # ---- RViz with navigation config ----
         Node(

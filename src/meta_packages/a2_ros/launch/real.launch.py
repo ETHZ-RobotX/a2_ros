@@ -95,6 +95,27 @@ def generate_launch_description():
         }],
     )
 
+    # IMU sits at [8.62, -9.14, -39.16] mm relative to the lidar frame.
+    front_imu_tf_node = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='front_lidar_imu_tf',
+        arguments=[
+            '--x', '0.00862', '--y', '-0.00914', '--z', '-0.03916',
+            '--frame-id', 'front_lidar_link', '--child-frame-id', 'front_imu_link',
+        ],
+    )
+
+    rear_imu_tf_node = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='rear_lidar_imu_tf',
+        arguments=[
+            '--x', '0.00862', '--y', '-0.00914', '--z', '-0.03916',
+            '--frame-id', 'rear_lidar_link', '--child-frame-id', 'rear_imu_link',
+        ],
+    )
+
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -113,5 +134,7 @@ def generate_launch_description():
         # joy_node,
         # teleop_node,
         robot_state_pub_node,
+        front_imu_tf_node,
+        rear_imu_tf_node,
         rviz_node,
     ])
