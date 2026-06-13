@@ -66,16 +66,16 @@ def generate_launch_description():
         parameters=[{'use_sim_time': False}],
     )
 
-    sim_clock_node = Node(
-        package='a2_sim_utils',
-        executable='sim_clock',
-        output='screen',
-        parameters=[{'use_sim_time': False}],
-    )
+    # sim_clock_node = Node(
+    #     package='a2_sim_utils',
+    #     executable='sim_clock',
+    #     output='screen',
+    #     parameters=[{'use_sim_time': False}],
+    # )
 
     a2_bridge_node = Node(
-        package='a2_sim_utils',
-        executable='a2_bridge',
+        package='a2_unitree_bridge',
+        executable='a2_bridge_sim',
         output='screen',
         parameters=[{'use_sim_time': True}],
     )
@@ -128,7 +128,6 @@ def generate_launch_description():
         scene_arg,
         rviz_arg,
         mujoco_node,
-        sim_clock_node,
         locomotion_node,
         a2_bridge_node,
         joy_node,
