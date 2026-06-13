@@ -17,7 +17,7 @@ ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained R
 ## Setup with Docker
 
 ### Prerequisites
-1. Install [Docker](https://docs.docker.com/engine/install/). Note Linux systems need Docker Engine **not Docker Desktop**, MacOS needs Docker Desktop, Windows TBD
+1. Install [Docker](https://docs.docker.com/engine/install/). Note Linux systems need Docker Engine **not Docker Desktop**, MacOS needs Docker Desktop, Windows TBD.
 1. Setup X11 forwarding privileges from docker to host:
     ```bash
     xhost +local:docker
@@ -27,23 +27,42 @@ ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained R
     git clone git@github.com:ETHZ-RobotX/a2_ros.git --recursive
     ```
 
-### Spawn Docker
-1. Spawn up the `a2_ros_dev` service using docker compose
-    ```bash
-    docker compose up -d a2_ros_dev
-    ```
-1. Enter container:
-    ```bash
-    docker compose exec a2_ros_dev bash
-    ```
+### First-time setup
+Run the dev environment setup script once from the repo root. This writes your host UID and GID into `.env` so the Docker image is built with matching file ownership:
+```bash
+./scripts/setup_devenv.sh
+```
 
-### Inside container
-1. The ROS environment is already sourced when starting up a bash shell. Use the `/a2_ros/scripts/setup.sh` for refreshing the workspace
-2. **NOTE**: Since the build artifacts are cached for speed, cleaning up the workspace requires: `rm -rf build/* install/*` instead of deleting the directories.
+The `.env` file is gitignored and personal to your machine. It is also sourced by all setup scripts inside the container, so any runtime overrides (e.g. `RMW_IMPLEMENTATION`, `ROS_BAGS_DIR`) can be added there and they will be picked up automatically.
 
-### Stopping container
-1. Stop the container with `docker compose stop a2_ros_dev`.
-2. Remove all resources (if required) with `docker compose down`
+### Build and spawn
+```bash
+docker compose build a2_ros_dev
+docker compose up -d a2_ros_dev
+```
+
+Enter the container:
+```bash
+docker compose exec a2_ros_dev bash
+```
+
+### Inside the container
+The ROS environment and workspace (if built) are sourced automatically on shell startup via `scripts/setup.sh`. To manually re-source or refresh the workspace:
+```bash
+source scripts/setup.sh
+```
+
+**Note:** Build artifacts are stored in Docker named volumes, so cleaning the workspace requires deleting the contents rather than the directories:
+```bash
+rm -rf build/* install/* log
+```
+
+### Stopping
+```bash
+docker compose stop a2_ros_dev       # pause, keeps volumes
+docker compose down                  # stop and remove containers
+docker compose down -v               # also remove volumes (wipes build cache)
+```
 
 ## Launching Subsystems
 Launch the simulation:
