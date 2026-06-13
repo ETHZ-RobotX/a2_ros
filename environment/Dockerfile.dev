@@ -89,6 +89,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ros-${ROS_DISTRO}-vision-opencv \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav \
+    gstreamer1.0-tools \
     ros-${ROS_DISTRO}-camera-calibration-parsers \
     ros-${ROS_DISTRO}-camera-info-manager \
     ros-${ROS_DISTRO}-image-transport
