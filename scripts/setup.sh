@@ -29,7 +29,7 @@ fi
 
 # --- ROS2 middleware (controlled by RMW_IMPLEMENTATION in .env) ---
 DEPLOYMENT_SCRIPTS="$WORKSPACE_DIR/src/core/a2_deployment_config/scripts"
-_RMW="${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"
+_RMW="${RMW_IMPLEMENTATION:-rmw_zenoh_cpp}"
 echo "[a2_ros] RMW: $_RMW"
 case "$_RMW" in
     rmw_zenoh_cpp)
