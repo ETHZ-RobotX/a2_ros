@@ -81,6 +81,7 @@ services:
       args:
         UID: ${HOST_UID:-1000}
         GID: ${HOST_GID:-1000}
+    shm_size: '512m'
     # Intentionally left out until we start testing on the robot
     # devices:
     #   - /dev/input/js0:/dev/input/js0
