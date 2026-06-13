@@ -34,3 +34,6 @@
 [submodule "src/object_detection"]
 	path = src/object_detection
 	url = git@github.com:ETHZ-RobotX/a2_object_detection.git
+[submodule "src/core/a2_unitree_bridge"]
+	path = src/core/a2_unitree_bridge
+	url = git@github.com:ETHZ-RobotX/a2_unitree_bridge.git
