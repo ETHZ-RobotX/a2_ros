@@ -1,4 +1,5 @@
 build:
+  parallel-workers: 6
   symlink-install: true
   build-base: /a2_ros/build
   install-base: /a2_ros/install

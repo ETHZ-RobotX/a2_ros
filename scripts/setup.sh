@@ -1,9 +1,10 @@
 #!/bin/bash
-# A2 Simulation Environment Setup
+# A2 Environment Setup
 # Source this file, don't execute it: source setup.sh
+# Mode (sim|robot) is controlled by the A2_MODE env var set in the Docker image.
 
-# Source common
-source ./scripts/common.sh
+_SETUP_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$_SETUP_SCRIPT_DIR/common.sh"
 
 # --- Workspace install ---
 if [ -f "$WORKSPACE_DIR/install/setup.bash" ]; then
@@ -14,30 +15,32 @@ else
     echo "  Run:  cd $WORKSPACE_DIR && colcon build --symlink-install"
 fi
 
-# --- Python venv (torch, numpy + inherits ROS 2 packages) ---
-if [ -f "$WORKSPACE_DIR/.venv/bin/activate" ]; then
-    source "$WORKSPACE_DIR/.venv/bin/activate"
-    echo "[a2_ros] Activated venv: $WORKSPACE_DIR/.venv"
-else
-    error " [a2_ros] WARNING: Python venv not found."
+# --- MuJoCo (sim only) ---
+if [ "$A2_MODE" = "sim" ]; then
+    export MUJOCO_DIR="${MUJOCO_DIR:-/opt/mujoco/mujoco-3.5.0}"
+    export LD_LIBRARY_PATH="$MUJOCO_DIR/lib:${LD_LIBRARY_PATH}"
+
+    MUJOCO_SYMLINK="$WORKSPACE_DIR/external/unitree_mujoco/simulate/mujoco"
+    if [ ! -L "$MUJOCO_SYMLINK" ]; then
+        ln -sf "$MUJOCO_DIR" "$MUJOCO_SYMLINK"
+        echo "[a2_ros] Created MuJoCo symlink: $MUJOCO_SYMLINK -> $MUJOCO_DIR"
+    fi
 fi
 
-# --- MuJoCo ---
-export MUJOCO_DIR="${MUJOCO_DIR:-/opt/mujoco/mujoco-3.5.0}"
-export LD_LIBRARY_PATH="$MUJOCO_DIR/lib:${LD_LIBRARY_PATH}"
+# --- ROS2 middleware (controlled by RMW_IMPLEMENTATION in .env) ---
+DEPLOYMENT_SCRIPTS="$WORKSPACE_DIR/src/core/a2_deployment_config/scripts"
+_RMW="${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"
+echo "[a2_ros] RMW: $_RMW"
+case "$_RMW" in
+    rmw_zenoh_cpp)
+        source "$DEPLOYMENT_SCRIPTS/setup_zenoh.sh" "$A2_MODE"
+        ;;
+    rmw_cyclonedds_cpp)
+        source "$DEPLOYMENT_SCRIPTS/setup_cyclonedds.sh" "$A2_MODE"
+        ;;
+    *)
+        warn "Unknown RMW_IMPLEMENTATION=${_RMW} — skipping middleware setup"
+        ;;
+esac
 
-# --- MuJoCo symlink required by unitree_mujoco ---
-MUJOCO_SYMLINK="$WORKSPACE_DIR/external/unitree_mujoco/simulate/mujoco"
-if [ ! -L "$MUJOCO_SYMLINK" ]; then
-    ln -sf "$MUJOCO_DIR" "$MUJOCO_SYMLINK"
-    echo "[a2_ros] Created MuJoCo symlink: $MUJOCO_SYMLINK -> $MUJOCO_DIR"
-fi
-
-export USER=root
-# --- ROS2 middleware ---
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export ROS_DOMAIN_ID=1
-export CYCLONEDDS_URI='<CycloneDDS><Domain><General><Interfaces><NetworkInterface name="lo" priority="default" multicast="default" /></Interfaces></General></Domain></CycloneDDS>'
-
-echo "[a2_ros] ROS_DOMAIN_ID=$ROS_DOMAIN_ID  RMW=$RMW_IMPLEMENTATION"
-echo "[a2_ros] Ready."
+echo "[a2_ros] Ready. (mode: $A2_MODE)"

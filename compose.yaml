@@ -18,28 +18,11 @@ x-vol-x11: &vol-x11
 x-vol-xauth: &vol-xauth
   type: bind
   source: ~/.Xauthority
-  target: /home/${USER}/.Xauthority
-x-vol-src: &vol-src
+  target: /home/ubuntu/.Xauthority
+x-vol-workspace: &vol-workspace
   type: bind
-  source: ./src
-  target: /a2_ros/src
-x-vol-external: &vol-external
-  type: bind
-  source: ./external
-  target: /a2_ros/external
-x-vol-scripts: &vol-scripts
-  type: bind
-  source: ./scripts
-  target: /a2_ros/scripts
-x-vol-environment: &vol-environment
-  type: bind
-  source: ./environment
-  target: /a2_ros/environment
-x-vol-git: &vol-git
-  # FIXME: Note that changes require container restart for single file mounts
-  type: bind
-  source: ./.git
-  target: /a2_ros/.git
+  source: .
+  target: /a2_ros
 x-vol-bags: &vol-bags
   # ROS bags — bind mount so bags are accessible from the host.
   # Override ROS_BAGS_DIR in a .env file to point at your archive directory.
@@ -57,11 +40,7 @@ services:
     volumes:
       - *vol-x11
       - *vol-xauth
-      - *vol-src
-      - *vol-external
-      - *vol-scripts
-      - *vol-environment
-      - *vol-git
+      - *vol-workspace
       - *vol-bags
 
   a2_ros_dev:
@@ -70,20 +49,19 @@ services:
       context: .
       dockerfile: ./environment/Dockerfile.dev
       target: dev
+      args:
+        UID: ${HOST_UID:-1000}
+        GID: ${HOST_GID:-1000}
     devices:
       - /dev/input/js0:/dev/input/js0
     volumes:
       - *vol-x11
       - *vol-xauth
-      - *vol-src
-      - *vol-external
-      - *vol-scripts
-      - *vol-environment
-      - *vol-git
+      - *vol-workspace
       - *vol-bags
       - type: volume
         source: dev_bash_history
-        target: /home/${USER}/.bash_history_dir
+        target: /home/ubuntu/.bash_history_dir
       - type: volume
         source: dev_colcon_build
         target: /a2_ros/build
@@ -92,7 +70,7 @@ services:
         target: /a2_ros/install
       - type: volume
         source: dev_rosdep_cache
-        target: /home/${USER}/.ros
+        target: /home/ubuntu/.ros
 
   a2_ros_robot:
     <<: *common
@@ -100,21 +78,20 @@ services:
       context: .
       dockerfile: ./environment/Dockerfile.dev
       target: robot
+      args:
+        UID: ${HOST_UID:-1000}
+        GID: ${HOST_GID:-1000}
     # Intentionally left out until we start testing on the robot
     # devices:
     #   - /dev/input/js0:/dev/input/js0
     volumes:
       - *vol-x11
       - *vol-xauth
-      - *vol-src
-      - *vol-external
-      - *vol-scripts
-      - *vol-environment
-      - *vol-git
+      - *vol-workspace
       - *vol-bags
       - type: volume
         source: robot_bash_history
-        target: /home/${USER}/.bash_history_dir
+        target: /home/ubuntu/.bash_history_dir
       - type: volume
         source: robot_colcon_build
         target: /a2_ros/build
@@ -123,7 +100,7 @@ services:
         target: /a2_ros/install
       - type: volume
         source: robot_rosdep_cache
-        target: /home/${USER}/.ros
+        target: /home/ubuntu/.ros
 
 volumes:
   dev_bash_history:

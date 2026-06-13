@@ -10,3 +10,11 @@ error() { echo -e "${RED}[ERROR]${NC} $*"; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Load .env from workspace root (silently — values can be overridden by the caller's environment)
+if [ -f "$WORKSPACE_DIR/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "$WORKSPACE_DIR/.env"
+    set +a
+fi

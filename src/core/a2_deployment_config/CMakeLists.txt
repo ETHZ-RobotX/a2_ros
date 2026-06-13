@@ -8,4 +8,12 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(
+  PROGRAMS
+    scripts/render_zenoh_config.py
+    scripts/setup_zenoh.sh
+    scripts/setup_cyclonedds.sh
+  DESTINATION share/${PROJECT_NAME}/scripts
+)
+
 ament_package()

@@ -1,0 +1,4 @@
+# Top Level Requirements
+# Points to all other requirements for python packages.
+# Big assumption is that there are no conflicts...
+-r src/object_detection/requirements.txt

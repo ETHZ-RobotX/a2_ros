@@ -1,8 +1,7 @@
 # syntax=docker/dockerfile:1
 ARG ROS_DISTRO=jazzy
 ARG MUJOCO_VERSION=3.5.0
-ARG USER=ubuntu # Default provided
-ARG UID=1000 # Default provided
+ARG USER=ubuntu
 
 # Builder image for non-ros dependencies to reduce source code footprint
 FROM ros:$ROS_DISTRO AS builder
@@ -14,7 +13,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     git \
     cmake \
     build-essential \
-    wget
+    wget \
+    python3-pip \
+    python3.12-venv
 
 # Unitree SDK2
 RUN git clone --depth=1 https://github.com/unitreerobotics/unitree_sdk2.git
@@ -31,14 +32,23 @@ RUN mkdir -p /opt/mujoco && \
     tar -xzf /tmp/mujoco.tar.gz -C /opt/mujoco/ && \
     rm /tmp/mujoco.tar.gz
 
+# Python virtual environments
+# Copy all requirements txt file in the high level one.
+COPY requirements.txt .
+COPY src/object_detection/requirements.txt src/object_detection/requirements.txt
+
+# Setup and install python venv (--system-site-packages to inherit ROS 2 Python packages)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m venv --system-site-packages /opt/venv && \
+    /opt/venv/bin/pip install -r requirements.txt
+
 ################################################################################
-# ROS Base Image with Dev Tools                                                #
-# Adds shell UX (oh-my-bash, fzf, completions) on top of the ROS base.         #
+# A2 Base Image                                                                #
+# Installs all apt packages and the python venv. Runs as root.                 #
+# No user creation here — keeps this layer stable and user-agnostic.           #
 ################################################################################
-FROM ros:${ROS_DISTRO} AS ros_dev_tools
+FROM ros:${ROS_DISTRO} AS a2_base
 ARG ROS_DISTRO
-ARG USER
-ENV USER=${USER:-ubuntu}
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -48,48 +58,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     build-essential \
     wget \
     bash-completion \
-    python3-argcomplete
-
-COPY environment/shell/.bashrc /home/$USER/.bashrc
-RUN chown -R $USER:$USER /home/$USER/.bashrc
-
-RUN git clone --depth=1 https://github.com/ohmybash/oh-my-bash.git /home/$USER/.oh-my-bash && \
-    chown -R $USER:$USER /home/$USER/.oh-my-bash
-RUN git clone --depth=1 https://github.com/junegunn/fzf.git /home/$USER/.fzf && \
-    HOME=/home/$USER /home/$USER/.fzf/install --all --no-update-rc && \
-    chown -R $USER:$USER /home/$USER/.fzf
-
-# Persistent history directory — mounted as a named volume in compose.yaml
-RUN mkdir -p /home/$USER/.bash_history_dir && \
-    chown $USER:$USER /home/$USER/.bash_history_dir && \
-    touch /home/$USER/.sudo_as_admin_successful && \
-    chown $USER:$USER /home/$USER/.sudo_as_admin_successful
-
-RUN echo "[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> /home/$USER/.bashrc && \
-    echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /home/$USER/.bashrc && \
-    echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> /home/$USER/.bashrc \
-    echo "export _colcon_cd_root=/opt/ros/$ROS_DISTRO/" >> /home/$USER/.bashrc \
-    echo 'eval "$(register-python-argcomplete ros2)" 2>/dev/null || true' >> /home/$USER/.bashrc
-
-USER $USER
-
-################################################################################
-# A2 Base Image                                                                #
-# Provides all packages for a base workspace install for A2                    #
-# Built on top of the ROS image with dev tools                                 #
-################################################################################
-FROM ros_dev_tools AS a2_base
-ARG ROS_DISTRO
-ARG USER
-ENV USER=${USER:-ubuntu}
-ARG UID
-
-# For installs
-USER root
-
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y \
+    python3-argcomplete \
     python3-pip \
     python3.12-venv \
     qtdeclarative5-dev \
@@ -104,6 +73,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     xorg-dev \
     openssh-client \
     ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
+    ros-${ROS_DISTRO}-rmw-zenoh-cpp \
     ros-${ROS_DISTRO}-urdf \
     ros-${ROS_DISTRO}-xacro \
     ros-${ROS_DISTRO}-rviz2 \
@@ -120,27 +90,63 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # empy required by colcon at build time (system Python, not venv)
 RUN python3 -m pip install --break-system-packages "empy==3.3.4"
 
-# Setup workspace
+# Python venv from builder — added to PATH so it's always active
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+################################################################################
+# A2 With User                                                                 #
+# Adds shell UX and the ubuntu user's home environment on top of a2_base.      #
+# UID/GID are baked in at build time to match the host user.                   #
+################################################################################
+FROM a2_base AS a2_with_user
+ARG ROS_DISTRO
+ARG USER=ubuntu
+ARG UID
+ARG GID
+ENV USER=${USER}
+
+RUN : "${UID:?UID build arg is required}" && : "${GID:?GID build arg is required}"
+
+# ubuntu user already exists in ros:jazzy base (from ubuntu:noble) at UID 1000.
+# Remap to the host UID/GID so bind-mounted files have correct ownership.
+RUN groupmod -g ${GID} ubuntu && usermod -u ${UID} -g ${GID} ubuntu
+
+# Set up home directory extras: persistent history dir and sudo marker.
+RUN mkdir -p /home/$USER/.bash_history_dir /home/$USER/.ros && \
+    touch /home/$USER/.sudo_as_admin_successful && \
+    chown -R $USER:$USER /home/$USER/.bash_history_dir /home/$USER/.ros /home/$USER/.sudo_as_admin_successful
+
+COPY environment/shell/.bashrc /home/$USER/.bashrc
+RUN chown $USER:$USER /home/$USER/.bashrc
+
+RUN git clone --depth=1 https://github.com/ohmybash/oh-my-bash.git /home/$USER/.oh-my-bash && \
+    chown -R $USER:$USER /home/$USER/.oh-my-bash
+RUN git clone --depth=1 https://github.com/junegunn/fzf.git /home/$USER/.fzf && \
+    HOME=/home/$USER /home/$USER/.fzf/install --all --no-update-rc && \
+    chown -R $USER:$USER /home/$USER/.fzf
+
+RUN echo "[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> /home/$USER/.bashrc && \
+    echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /home/$USER/.bashrc && \
+    echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> /home/$USER/.bashrc && \
+    echo "export _colcon_cd_root=/opt/ros/$ROS_DISTRO/" >> /home/$USER/.bashrc && \
+    echo 'eval "$(register-python-argcomplete ros2)" 2>/dev/null || true' >> /home/$USER/.bashrc
+
+# Setup workspace dirs
 RUN mkdir -p /a2_ros/build /a2_ros/install && \
     chown -R $USER:$USER /a2_ros
 WORKDIR /a2_ros
 
-# Setup and install python venv (--system-site-packages to inherit ROS 2 Python packages)
-RUN python3 -m venv --system-site-packages .venv && \
-    .venv/bin/pip install --no-cache-dir numpy
-
-COPY --chown=$USER:$USER external /a2_ros/external
-COPY --chown=$USER:$USER scripts /a2_ros/scripts
-COPY --chown=$USER:$USER src /a2_ros/src
-COPY --chown=$USER:$USER environment /a2_ros/environment
-
 USER $USER
+
+# Copy everything to cwd
+COPY --chown=$USER:$USER . .
 
 ################################################################################
 # Development Stage. Builds simulation                                         #
 # This version is used to test locally.                                        #
 ################################################################################
-FROM a2_base AS dev
+FROM a2_with_user AS dev
 ARG ROS_DISTRO
 ARG MUJOCO_VERSION
 ARG USER
@@ -154,33 +160,30 @@ USER root
 ENV MUJOCO_DIR=/opt/mujoco/mujoco-${MUJOCO_VERSION}
 COPY --from=builder /opt/mujoco /opt/mujoco
 RUN ln -sf $MUJOCO_DIR external/unitree_mujoco/simulate/mujoco
-
-# Install object detection Python dependencies into the venv
-RUN --mount=type=cache,target=/root/.cache/pip \
-    .venv/bin/pip install -r src/object_detection/requirements.txt
-
 USER $USER
 
 # Set default package manifest for simulation
+ENV A2_MODE=sim
 ENV COLCON_DEFAULTS_FILE=/a2_ros/environment/colcon/sim.defaults.yaml
 
-# Build workspace
-RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
+# Source ROS environment
 RUN echo "source ${PWD}/scripts/setup.sh" >> /home/$USER/.bashrc
 
 ################################################################################
 # Robot Builder Stage.                                                         #
 # This version is deployed to the robot                                        #
 ################################################################################
-FROM a2_base AS robot
+FROM a2_with_user AS robot
 ARG ROS_DISTRO
-ARG MUJOCO_VERSION
 ARG USER
 ENV USER=${USER:-ubuntu}
 
+# Copy Unitree SDK from Builder
+COPY --from=builder /opt/unitree_robotics /opt/unitree_robotics
+
 # Set default package manifest for robot
+ENV A2_MODE=robot
 ENV COLCON_DEFAULTS_FILE=/a2_ros/environment/colcon/robot.defaults.yaml
 
-# Build workspace
-RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
-RUN echo "source ${PWD}/scripts/setup_robot.sh" >> /home/$USER/.bashrc
+# Source ROS environment
+RUN echo "source ${PWD}/scripts/setup.sh" >> /home/$USER/.bashrc
