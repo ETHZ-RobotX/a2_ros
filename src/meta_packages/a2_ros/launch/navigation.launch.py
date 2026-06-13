@@ -177,7 +177,7 @@ def generate_launch_description():
                 'use_sim_time': False,
                 'input_topic':  '/front_lidar/points',
                 'target_frame': 'map',
-                'tf_lag_sec':   0.005,
+                'tf_lag_sec':   0.1,
             }],
         ),
 
