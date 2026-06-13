@@ -168,18 +168,26 @@ def generate_launch_description():
             name='nav_vel_relay',
             output='screen',
         ),
+
+        # ---- sport mode velocity relay: /cmd_vel -> /api/sport/request ----
+        # Node(
+        #     package='a2_utils',
+        #     executable='cmd_vel_sport_relay',
+        #     name='cmd_vel_sport_relay',
+        #     output='screen',
+        # ),
         
-        Node(
-            package='a2_utils',
-            executable='registered_scan_pub',
-            output='screen',
-            parameters=[{
-                'use_sim_time': False,
-                'input_topic':  '/front_lidar/points',
-                'target_frame': 'map',
-                'tf_lag_sec':   0.1,
-            }],
-        ),
+        # Node(
+        #     package='a2_utils',
+        #     executable='registered_scan_pub',
+        #     output='screen',
+        #     parameters=[{
+        #         'use_sim_time': False,
+        #         'input_topic':  '/front_lidar/points',
+        #         'target_frame': 'map',
+        #         'tf_lag_sec':   0.1,
+        #     }],
+        # ),
 
         # ---- RViz with navigation config ----
         Node(

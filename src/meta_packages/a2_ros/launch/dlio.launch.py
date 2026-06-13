@@ -36,7 +36,7 @@ _DLIO_REMAPS_COMMON = [
     ('kf_cloud',                                    'dlio/odom_node/pointcloud/keyframe'),
     ('deskewed',                                    'dlio/odom_node/pointcloud/deskewed'),
     ('deskewed_not_transformed',                    'dlio/odom_node/pointcloud/deskewed_not_transformed'),
-    ('deskewed_and_transformed_to_map',             'dlio/odom_node/pointcloud/deskewed_and_transformed_to_map'),
+    ('deskewed_and_transformed_to_map',             '/registered_scan'),
     ('markers/velocity_linear',                     'dlio/odom_node/markers/velocity_linear'),
     ('markers/velocity_angular',                    'dlio/odom_node/markers/velocity_angular'),
     ('markers/correction',                          'dlio/odom_node/markers/correction'),
