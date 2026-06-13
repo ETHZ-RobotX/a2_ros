@@ -50,9 +50,6 @@
 [submodule "src/core/a2_utils"]
 	path = src/core/a2_utils
 	url = git@github.com:ETHZ-RobotX/a2_utils.git
-[submodule "external/unitree_camera_bridge"]
-	path = external/unitree_camera_bridge
-	url = git@github.com:ETHZ-RobotX/unitree_camera_bridge.git
 [submodule "external/resple"]
 	path = external/resple
 	url = git@github.com:ASIG-X/RESPLE.git
