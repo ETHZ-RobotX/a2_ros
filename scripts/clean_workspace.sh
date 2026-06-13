@@ -26,8 +26,9 @@ info "Cleaning workspace..."
 for dir in "${TARGETS[@]}"; do
     target="$WORKSPACE_DIR/$dir"
     if [ -d "$target" ]; then
-        rm -rf "$target"
-        info "  Removed: $target"
+        # Remove contents only — the directory itself may be a Docker volume mount point
+        rm -rf "${target:?}/"*
+        info "  Cleaned: $target"
     else
         info "  Skipped (not found): $target"
     fi
