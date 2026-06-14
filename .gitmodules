@@ -42,7 +42,7 @@
 	url = https://github.com/clydemcqueen/gscam2.git
 [submodule "external/direct_lidar_inertial_odometry"]
 	path = external/direct_lidar_inertial_odometry
-	url = git@github.com:leggedrobotics/direct_lidar_inertial_odometry.git
+	url = git@github.com:ETHZ-RobotX/direct_lidar_inertial_odometry.git
 	branch = summerschool_2026
 [submodule "external/HesaiLidar"]
 	path = external/HesaiLidar
