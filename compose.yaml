@@ -27,8 +27,11 @@ x-vol-x11: &vol-x11
   source: /tmp/.X11-unix
   target: /tmp/.X11-unix
 x-vol-xauth: &vol-xauth
+  # Mount the real X auth cookie. Display managers (e.g. GDM) keep it at
+  # $XAUTHORITY (e.g. /run/user/UID/gdm/Xauthority), not ~/.Xauthority — so
+  # prefer $XAUTHORITY and fall back to ~/.Xauthority when it is unset.
   type: bind
-  source: ~/.Xauthority
+  source: ${XAUTHORITY:-${HOME}/.Xauthority}
   target: /home/ubuntu/.Xauthority
 x-vol-workspace: &vol-workspace
   type: bind
