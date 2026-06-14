@@ -52,6 +52,11 @@ The ROS environment and workspace (if built) are sourced automatically on shell 
 source scripts/setup.sh
 ```
 
+Before launching any nodes, start the Zenoh router in a separate terminal (all ROS2 nodes require it for peer discovery):
+```bash
+scripts/start_zenoh_router.sh
+```
+
 **Note:** Build artifacts are stored in Docker named volumes, so cleaning the workspace requires deleting the contents rather than the directories:
 ```bash
 rm -rf build/* install/* log
