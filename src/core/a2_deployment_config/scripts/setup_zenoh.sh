@@ -15,8 +15,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Prefer explicit arg, then ZENOH_PROFILE env var (set in .env), then sim
 ZENOH_PROFILE="${1:-${ZENOH_PROFILE:-sim}}"
 
-# Router IP: prefer explicit arg, then ZENOH_ROUTER_IP env var, then localhost
-ROUTER_IP="${2:-${ZENOH_ROUTER_IP:-127.0.0.1}}"
+# Router IP resolution order:
+#   1. explicit 2nd arg
+#   2. per-profile override: ZENOH_ROUTER_IP_SIM / ZENOH_ROUTER_IP_ROBOT
+#   3. generic ZENOH_ROUTER_IP (shared fallback)
+#   4. localhost
+_PROFILE_IP_VAR="ZENOH_ROUTER_IP_$(echo "$ZENOH_PROFILE" | tr '[:lower:]' '[:upper:]')"
+ROUTER_IP="${2:-${!_PROFILE_IP_VAR:-${ZENOH_ROUTER_IP:-127.0.0.1}}}"
 
 if [[ $# -gt 2 ]]; then
   echo "Error: Too many arguments"
@@ -31,6 +36,9 @@ else
 fi
 
 export RMW_IMPLEMENTATION=rmw_zenoh_cpp
+
+# Isolate the Zenoh (sim) network on its own ROS domain. Override in .env if needed.
+export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-30}"
 
 # Render session config from template
 CONFIG_DIR="${HOME}/.tmp"
@@ -51,13 +59,20 @@ if [[ -f "$FINAL_CONFIG" ]]; then
   fi
 fi
 
-mv -f "$TEMP_CONFIG" "$FINAL_CONFIG"
+# Use `command mv` to bypass the interactive shell's `mv -iv` alias (which
+# would otherwise print a "renamed ..." line on every shell startup).
+command mv -f "$TEMP_CONFIG" "$FINAL_CONFIG"
 export ZENOH_SESSION_CONFIG_URI="$FINAL_CONFIG"
 
 echo "[a2_ros] Zenoh session config: $FINAL_CONFIG"
+echo "[a2_ros] ROS_DOMAIN_ID=$ROS_DOMAIN_ID"
 
-# Warn if router is not running — nodes will connect once it starts
-if ! pgrep -x rmw_zenohd > /dev/null 2>&1; then
-  echo "[a2_ros] WARNING: Zenoh router is not running."
-  echo "[a2_ros]   Start it in a separate terminal: scripts/start_zenoh_router.sh"
+# Warn if the router isn't reachable — nodes will connect once it starts.
+# We probe the TCP port rather than using pgrep: the router runs in a separate
+# container (shared host network), so its process isn't visible in this
+# container's PID namespace. A port probe also works for a remote router.
+if ! timeout 1 bash -c "exec 3<>/dev/tcp/${ROUTER_IP}/7447" 2>/dev/null; then
+  echo "[a2_ros] WARNING: Zenoh router not reachable at ${ROUTER_IP}:7447."
+  echo "[a2_ros]   It should autostart via compose (service: zenoh_router_${ZENOH_PROFILE})."
+  echo "[a2_ros]   Manual fallback: scripts/start_zenoh_router.sh"
 fi

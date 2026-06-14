@@ -168,8 +168,11 @@
     },
     shared_memory: {
       /// CHANGED
-      /// Disabled for sim — many nodes exhausted /dev/shm on startup (OS error 12)
-      enabled: false,
+      /// Enabled for low-overhead local transport of large messages (point
+      /// clouds, images). The container shares the host /dev/shm (ipc: host in
+      /// compose.yaml), which avoids the earlier OS error 12 (/dev/shm
+      /// exhaustion) that previously forced this off.
+      enabled: true,
       /// CHANGED
       /// Initializes shared memory internals at startup rather than first shm
       /// buffer usage.

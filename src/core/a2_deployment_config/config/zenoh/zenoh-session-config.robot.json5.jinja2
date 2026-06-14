@@ -169,9 +169,11 @@
     shared_memory: {
       /// CHANGED
       /// Enable shared memory on the same host to ensure that local
-      /// connections sending large messages have low overhead.
-      /// FIXME: Shared memory not enough in docker?
-      enabled: false,
+      /// connections sending large messages have low overhead. The container
+      /// shares the host /dev/shm (ipc: host in compose.yaml), which provides
+      /// enough space — this previously read "not enough in docker" before the
+      /// host IPC namespace and memlock/rtprio ulimits were configured.
+      enabled: true,
       /// CHANGED
       /// Initializes shared memory internals at startup rather than first shm
       /// buffer usage.
