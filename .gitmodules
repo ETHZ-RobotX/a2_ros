@@ -52,7 +52,7 @@
 	url = git@github.com:ETHZ-RobotX/a2_utils.git
 [submodule "external/resple"]
 	path = external/resple
-	url = git@github.com:ASIG-X/RESPLE.git
+	url = git@github.com:ETHZ-RobotX/RESPLE.git
 [submodule "external/gscam2"]
 	path = external/gscam2
 	url = https://github.com/clydemcqueen/gscam2.git
