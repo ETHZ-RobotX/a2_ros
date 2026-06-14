@@ -18,7 +18,11 @@ export OSH=~/.oh-my-bash
 
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-bash is loaded.
-OSH_THEME="nekolight"
+OSH_THEME="robbyrussell" # minimal one-line theme
+
+# Show only the branch name + clean/dirty marker in the git prompt,
+# hiding the staged/unstaged/untracked counts (S:/U:/?:).
+SCM_GIT_SHOW_DETAILS=false
 
 # If you set OSH_THEME to "random", you can ignore themes you don't like.
 # OMB_THEME_RANDOM_IGNORED=("powerbash10k" "wanelo")
