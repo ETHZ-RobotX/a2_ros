@@ -3,6 +3,12 @@
 # Source this file, don't execute it: source setup.sh
 # Mode (sim|robot) is controlled by the A2_MODE env var set in the Docker image.
 
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    echo "ERROR: Do not execute this script directly. Source it instead:"
+    echo "  source ./scripts/setup.sh"
+    exit 1
+fi
+
 _SETUP_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$_SETUP_SCRIPT_DIR/common.sh"
 
