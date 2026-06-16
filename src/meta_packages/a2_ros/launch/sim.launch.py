@@ -63,7 +63,7 @@ def generate_launch_description():
         package='a2_locomotion_controller',
         executable='locomotion_executor',
         output='screen',
-        parameters=[{'use_sim_time': False}],
+        parameters=[{'use_sim_time': True}],
     )
 
     # sim_clock_node = Node(

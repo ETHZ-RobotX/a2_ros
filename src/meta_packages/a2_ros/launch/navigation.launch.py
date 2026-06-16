@@ -6,12 +6,11 @@ Starts the CMU Autonomous Exploration stack on top of the running sim:
   - terrain_analysis_ext : builds /terrain_map_ext (global terrain for far_planner)
   - local_planner        : obstacle-aware path selection + path follower
   - far_planner          : global visibility-graph planner
-  - nav_vel_relay        : converts /nav_vel_cmd (TwistStamped) -> /cmd_vel (Twist)
 
 Prerequisites (provided by sim.launch.py + a2_bridge):
-  /state_estimation  - ground-truth odometry (published by a2_bridge in a2_sim_utils)
-  /registered_scan   - world-frame lidar cloud (published by a2_bridge in a2_sim_utils)
-  /clock             - sim time clock (published by sim_clock in a2_sim_utils)
+  /state_estimation  - ground-truth odometry (published by a2_bridge_sim in a2_unitree_bridge)
+  /registered_scan   - world-frame lidar cloud (published by a2_bridge_sim in a2_unitree_bridge)
+  /clock             - sim time clock (published by a2_bridge_sim in a2_unitree_bridge)
 
 Usage:
   # Terminal 1
@@ -21,8 +20,9 @@ Usage:
   ros2 launch a2_ros navigation.launch.py
 
   # Then set the robot to stand (2) then locomotion (3):
-  ros2 topic pub /mode std_msgs/msg/Int32 "data: 2"   # stand up
-  ros2 topic pub /mode std_msgs/msg/Int32 "data: 3"   # locomotion
+  ros2 topic pub /a2/mode a2_interfaces/msg/OperatingMode "mode: 2"   # stand up
+  ros2 topic pub /a2/mode a2_interfaces/msg/OperatingMode "mode: 3"   # unlock joints
+  ros2 topic pub /a2/mode a2_interfaces/msg/OperatingMode "mode: 4"   # locomotion
 
   # Send a navigation goal in RViz using the 'Goalpoint' button,
   # or publish directly:
@@ -127,6 +127,9 @@ def generate_launch_description():
             executable='pathFollower',
             name='pathFollower',
             output='screen',
+            remappings=[
+                ('/nav_vel_cmd', '/cmd_vel'), # Since cmd_vel now needs TwistStamped
+            ],
             parameters=[{
                 'twoWayDrive':     False,
                 'lookAheadDis':    0.4,
@@ -155,14 +158,6 @@ def generate_launch_description():
                 ('/scan_cloud',         '/registered_scan'),
                 ('/terrain_local_cloud','/terrain_map'),
             ],
-        ),
-
-        # ---- relay: /nav_vel_cmd (TwistStamped) -> /cmd_vel (Twist) ----
-        Node(
-            package='a2_ros',
-            executable='nav_vel_relay',
-            name='nav_vel_relay',
-            output='screen',
         ),
 
         # ---- RViz with navigation config ----

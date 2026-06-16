@@ -40,3 +40,6 @@
 [submodule "external/gscam2"]
 	path = external/gscam2
 	url = https://github.com/clydemcqueen/gscam2.git
+[submodule "src/core/a2_utils"]
+	path = src/core/a2_utils
+	url = git@github.com:ETHZ-RobotX/a2_utils.git
