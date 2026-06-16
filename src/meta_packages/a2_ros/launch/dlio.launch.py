@@ -180,7 +180,7 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         name='dlio_rviz',
-        arguments=['-d', PathJoinSubstitution([dlio_pkg, 'launch', 'dlio.rviz'])],
+        arguments=['-d', PathJoinSubstitution([dlio_pkg, 'launch', 'a2_front.rviz'])],
         parameters=[{'use_sim_time': True}],
         condition=IfCondition(LaunchConfiguration('rviz')),
     )

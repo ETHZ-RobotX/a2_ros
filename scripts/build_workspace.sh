@@ -11,7 +11,7 @@ source ./scripts/common.sh
 bash ./scripts/patch_unitree.sh
 
 info "Building workspace..."
-source /opt/ros/humble/setup.bash
+source /opt/ros/jazzy/setup.bash
 cd "$WORKSPACE_DIR"
 # unitree_mujoco uses /proc/self/exe to locate its install prefix, so its binary
 # must be physically copied (not symlinked) — build it separately without --symlink-install.
