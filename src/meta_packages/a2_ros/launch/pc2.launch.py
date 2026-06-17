@@ -29,16 +29,15 @@ def generate_launch_description():
         )
     )
 
-    joy_node = Node(
-        package='joy',
-        executable='joy_node',
-        name='joy_node',
-        parameters=[{
-            'device_name': 'PS5 Controller',
-            'deadzone': 0.05,
-            'autorepeat_rate': 500.0,
-        }]
-    )
+    # joy_node = Node(
+    #     package='joy',
+    #     executable='joy_node',
+    #     name='joy_node',
+    #     parameters=[{
+    #         'deadzone': 0.05,
+    #         'autorepeat_rate': 500.0,
+    #     }]
+    # )
 
     teleop_node = Node(
         package='a2_ros',
@@ -59,7 +58,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         bridge_launch,
-        joy_node,
+        # joy_node,
         teleop_node,
         camera_launch,
     ])
