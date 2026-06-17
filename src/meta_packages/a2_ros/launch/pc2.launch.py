@@ -3,6 +3,8 @@ PC2 launch.
 
 Starts:
   - a2_unitree_bridge  : bridge node (publishes /joint_states and /imu/data from hardware)
+  - joy_node           : reads gamepad from /dev/input/js0
+  - teleop_joy         : maps gamepad axes/buttons to /cmd_vel and /a2/mode (FSM)
   - gscam2             : H.264 multicast camera stream
 
 Usage:
@@ -14,6 +16,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -26,6 +29,28 @@ def generate_launch_description():
         )
     )
 
+    joy_node = Node(
+        package='joy',
+        executable='joy_node',
+        name='joy_node',
+        parameters=[{
+            'device_name': 'PS5 Controller',
+            'deadzone': 0.05,
+            'autorepeat_rate': 500.0,
+        }]
+    )
+
+    teleop_node = Node(
+        package='a2_ros',
+        executable='teleop_joy',
+        output='screen',
+        parameters=[{
+            'linear_x_limit':  0.5,
+            'linear_y_limit':  0.4,
+            'angular_z_limit': 0.5,
+        }]
+    )
+
     camera_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(a2_ros_launch_dir, 'camera.launch.py')
@@ -34,5 +59,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         bridge_launch,
+        joy_node,
+        teleop_node,
         camera_launch,
     ])
