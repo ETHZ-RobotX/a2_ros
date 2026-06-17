@@ -5,21 +5,21 @@
 SCRIPT_DIR=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
 
 # --- ROS2 ---
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/humble/setup.bash
 
 # --- Workspace install ---
-if [ -f "$SCRIPT_DIR/../install/setup.bash" ]; then
-    source "$SCRIPT_DIR/../install/setup.bash"
-    echo "[a2_ros] Sourced workspace: $SCRIPT_DIR/.."
+if [ -f "$SCRIPT_DIR/../../install/setup.bash" ]; then
+    source "$SCRIPT_DIR/../../install/setup.bash"
+    echo "[a2_ros] Sourced workspace: $SCRIPT_DIR/../.."
 else
     echo "[a2_ros] WARNING: Workspace not built yet."
-    echo "  Run:  cd $SCRIPT_DIR/.. && colcon build --symlink-install"
+    echo "  Run:  cd $SCRIPT_DIR/../.. && colcon build --symlink-install"
 fi
 
 # --- Python venv (torch, numpy + inherits ROS2 packages) ---
-if [ -f "$SCRIPT_DIR/../.venv/bin/activate" ]; then
-    source "$SCRIPT_DIR/../.venv/bin/activate"
-    echo "[a2_ros] Activated venv: $SCRIPT_DIR/../.venv"
+if [ -f "$SCRIPT_DIR/../../.venv/bin/activate" ]; then
+    source "$SCRIPT_DIR/../../.venv/bin/activate"
+    echo "[a2_ros] Activated venv: $SCRIPT_DIR/../../.venv"
 else
     echo "[a2_ros] WARNING: Python venv not found. Run install.sh first."
 fi

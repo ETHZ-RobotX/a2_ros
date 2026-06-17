@@ -40,6 +40,19 @@
 [submodule "external/gscam2"]
 	path = external/gscam2
 	url = https://github.com/clydemcqueen/gscam2.git
+[submodule "external/direct_lidar_inertial_odometry"]
+	path = external/direct_lidar_inertial_odometry
+	url = git@github.com:ETHZ-RobotX/direct_lidar_inertial_odometry.git
+	branch = summerschool_2026
+[submodule "external/HesaiLidar"]
+	path = external/HesaiLidar
+	url = git@github.com:ETHZ-RobotX/HesaiLidar_ROS_2.0.git
 [submodule "src/core/a2_utils"]
 	path = src/core/a2_utils
 	url = git@github.com:ETHZ-RobotX/a2_utils.git
+[submodule "external/resple"]
+	path = external/resple
+	url = git@github.com:ETHZ-RobotX/RESPLE.git
+[submodule "external/gscam2"]
+	path = external/gscam2
+	url = https://github.com/clydemcqueen/gscam2.git

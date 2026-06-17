@@ -2,11 +2,12 @@
 Full A2 real-robot launch.
 
 Starts:
-  - a2_unitree_bridge  : bridge node (publishes /joint_states and /imu/data from hardware)
-  - hesai_ros_driver   : Hesai LiDAR driver (front lidar by default)
-  - joy_node           : reads gamepad from /dev/input/js0
-  - teleop_joy         : maps gamepad axes/buttons to /cmd_vel and /mode
-  - gscam2             : H.264 multicast camera stream
+  - locomotion_executor : RL policy node (subscribes /lowstate + /mode + /cmd_vel,
+                                           publishes /lowcmd)
+  - joint_states_pub    : republishes /lowstate motor positions as /joint_states
+  - imu_pub             : republishes /lowstate IMU as /imu/data (needed by DLIO)
+  - joy_node            : reads gamepad from /dev/input/js0
+  - teleop_joy          : maps gamepad axes/buttons to /cmd_vel and /mode
 
 Always on:
   - robot_state_publisher : broadcasts fixed TF links from URDF
@@ -17,15 +18,13 @@ Optional (pass rviz:=true):
 Usage:
   ros2 launch a2_ros real.launch.py
   ros2 launch a2_ros real.launch.py rviz:=true
-  ros2 launch a2_ros real.launch.py lidar_config:=config_rear.yaml
 """
 
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, Command
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
@@ -33,9 +32,6 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
     description_dir = get_package_share_directory('a2_description')
-    bridge_launch_dir = get_package_share_directory('a2_unitree_bridge')
-    a2_ros_launch_dir = os.path.join(get_package_share_directory('a2_ros'), 'launch')
-    hesai_launch_dir = os.path.join(get_package_share_directory('hesai_ros_driver'), 'launch')
 
     rviz_arg = DeclareLaunchArgument(
         'rviz',
@@ -43,41 +39,49 @@ def generate_launch_description():
         description='Launch RViz2 visualisation'
     )
 
-    lidar_config_arg = DeclareLaunchArgument(
-        'lidar_config',
-        default_value='config_front.yaml',
-        description='Hesai config filename (relative to hesai_ros_driver/config/)'
-    )
-
     urdf_path = os.path.join(description_dir, 'urdf', 'a2.urdf')
-    rviz_path = os.path.join(description_dir, 'rviz', 'robot.rviz')
+    rviz_path = os.path.join(description_dir, 'rviz', 'default.rviz')
 
-    bridge_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(bridge_launch_dir, 'launch', 'robot.launch.py')
-        )
+    locomotion_node = Node(
+        package='a2_locomotion_controller',
+        executable='locomotion_executor',
+        output='screen',
+        parameters=[{'use_sim_time': False}],
     )
 
-    teleop_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(a2_ros_launch_dir, 'teleop_joy.launch.py')
-        )
+    joint_states_node = Node(
+        package='a2_utils',
+        executable='joint_states_pub',
+        output='screen',
+        parameters=[{'use_sim_time': False}],
     )
 
-    camera_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(a2_ros_launch_dir, 'camera.launch.py')
-        )
+    imu_node = Node(
+        package='a2_utils',
+        executable='imu_pub',
+        output='screen',
+        parameters=[{'use_sim_time': False}],
     )
 
-    lidar_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(hesai_launch_dir, 'start_launch.py')
-        ),
-        launch_arguments={
-            'config_file': LaunchConfiguration('lidar_config'),
-            'rviz': 'false',
-        }.items()
+    joy_node = Node(
+        package='joy',
+        executable='joy_node',
+        name='joy_node',
+        parameters=[{
+            'dev': '/dev/input/js0',
+            'deadzone': 0.05,
+            'autorepeat_rate': 500.0,
+        }]
+    )
+
+    teleop_node = Node(
+        package='a2_ros',
+        executable='teleop_joy',
+        output='screen',
+        parameters=[{
+            'linear_speed_limit': 0.5,
+            'angular_speed_limit': 1.0,
+        }]
     )
 
     robot_state_pub_node = Node(
@@ -92,25 +96,25 @@ def generate_launch_description():
     )
 
     # IMU sits at [8.62, -9.14, -39.16] mm relative to the lidar frame.
-    # front_imu_tf_node = Node(
-    #     package='tf2_ros',
-    #     executable='static_transform_publisher',
-    #     name='front_lidar_imu_tf',
-    #     arguments=[
-    #         '--x', '0.00862', '--y', '-0.00914', '--z', '-0.03916',
-    #         '--frame-id', 'front_lidar_link', '--child-frame-id', 'front_imu_link',
-    #     ],
-    # )
+    front_imu_tf_node = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='front_lidar_imu_tf',
+        arguments=[
+            '--x', '0.00862', '--y', '-0.00914', '--z', '-0.03916',
+            '--frame-id', 'front_lidar_link', '--child-frame-id', 'front_imu_link',
+        ],
+    )
 
-    # rear_imu_tf_node = Node(
-    #     package='tf2_ros',
-    #     executable='static_transform_publisher',
-    #     name='rear_lidar_imu_tf',
-    #     arguments=[
-    #         '--x', '0.00862', '--y', '-0.00914', '--z', '-0.03916',
-    #         '--frame-id', 'rear_lidar_link', '--child-frame-id', 'rear_imu_link',
-    #     ],
-    # )
+    rear_imu_tf_node = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='rear_lidar_imu_tf',
+        arguments=[
+            '--x', '0.00862', '--y', '-0.00914', '--z', '-0.03916',
+            '--frame-id', 'rear_lidar_link', '--child-frame-id', 'rear_imu_link',
+        ],
+    )
 
     rviz_node = Node(
         package='rviz2',
@@ -124,13 +128,13 @@ def generate_launch_description():
 
     return LaunchDescription([
         rviz_arg,
-        lidar_config_arg,
-        bridge_launch,
-        teleop_launch,
-        camera_launch,
-        lidar_launch,
+        # locomotion_node,
+        joint_states_node,
+        imu_node,
+        # joy_node,
+        # teleop_node,
         robot_state_pub_node,
-        # front_imu_tf_node,
-        # rear_imu_tf_node,
+        front_imu_tf_node,
+        rear_imu_tf_node,
         rviz_node,
     ])

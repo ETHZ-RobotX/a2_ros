@@ -1,0 +1,16 @@
+[Unit]
+Description=phc2sys - synchronize clocks
+After=sys-subsystem-net-devices-net1.device ptp4l-master.service
+Requires=ptp4l-master.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/sbin/phc2sys -s CLOCK_REALTIME -c net1 -O 0 -m -S 1 -F 128
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
-    <Domain Id="any">
-        <General>
-            <Interfaces>
-                <NetworkInterface name="eth0" priority="default" multicast="default" />
-            </Interfaces>
-            <AllowMulticast>spdp</AllowMulticast>
-        </General>
-    </Domain>
+<Domain Id="any">
+<General>
+<Interfaces>
+<NetworkInterface name="eth0" priority="10" multicast="true" />
+<NetworkInterface name="net1" priority="1" multicast="false" />
+</Interfaces>
+<AllowMulticast>true</AllowMulticast>
+<MulticastRecvNetworkInterfaceAddresses>all</MulticastRecvNetworkInterfaceAddresses>
+<MaxMessageSize>65500B</MaxMessageSize>
+</General>
+<Discovery>
+<ParticipantIndex>auto</ParticipantIndex>
+<Peers>
+<Peer address="192.168.124.162"/>
+<Peer address="192.168.124.171"/>
+</Peers>
+</Discovery>
+<Internal>
+<SocketReceiveBufferSize min="0.2MB"/>
+<Watermarks>
+<WhcHigh>500kB</WhcHigh>
+</Watermarks>
+</Internal>
+</Domain>
 </CycloneDDS>

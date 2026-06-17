@@ -17,6 +17,7 @@ ask_yn() {
 }
 
 SCRIPT_DIR=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+REPO_DIR=$(realpath "$SCRIPT_DIR/../..")
 MUJOCO_VERSION="3.5.0"
 MUJOCO_DIR="$HOME/.mujoco/mujoco-${MUJOCO_VERSION}"
 
@@ -44,9 +45,9 @@ info "Initialising git submodules..."
 git config --global --add safe.directory /a2_ros
 
 # unitree_mujoco needs the mujoco symlink removed before git can clone into it
-MUJOCO_SYMLINK="$SCRIPT_DIR/../external/unitree_mujoco/simulate/mujoco"
+MUJOCO_SYMLINK="$REPO_DIR/external/unitree_mujoco/simulate/mujoco"
 [ -L "$MUJOCO_SYMLINK" ] && rm "$MUJOCO_SYMLINK"
-git -C "$SCRIPT_DIR/.." submodule update --init --recursive
+git -C "$REPO_DIR" submodule update --init --recursive
 
 # ---------------------------------------------------------------
 # System packages
@@ -54,9 +55,9 @@ git -C "$SCRIPT_DIR/.." submodule update --init --recursive
 info "Checking system packages..."
 PKGS=(
     build-essential cmake git wget python3.12-venv
-    ros-jazzy-joy ros-jazzy-robot-state-publisher ros-jazzy-rviz2
-    ros-jazzy-rmw-cyclonedds-cpp
-    ros-jazzy-joint-state-publisher-gui
+    ros-humble-joy ros-humble-robot-state-publisher ros-humble-rviz2
+    ros-humble-rmw-cyclonedds-cpp
+    ros-humble-joint-state-publisher-gui
     libyaml-cpp-dev libspdlog-dev libboost-all-dev libfmt-dev libglfw3-dev
 )
 MISSING=()
@@ -114,7 +115,7 @@ else
 fi
 
 # Fix symlink in unitree_mujoco
-SYMLINK="$SCRIPT_DIR/../external/unitree_mujoco/simulate/mujoco"
+SYMLINK="$REPO_DIR/external/unitree_mujoco/simulate/mujoco"
 rm -f "$SYMLINK"
 ln -s "$MUJOCO_DIR" "$SYMLINK"
 info "Symlink: external/unitree_mujoco/simulate/mujoco -> $MUJOCO_DIR"
@@ -144,7 +145,7 @@ fi
 # ---------------------------------------------------------------
 # Ignore unitree_ros2 example package (not needed, would fail to build)
 # ---------------------------------------------------------------
-UNITREE_EXAMPLE="$SCRIPT_DIR/../external/unitree_ros2/example"
+UNITREE_EXAMPLE="$REPO_DIR/external/unitree_ros2/example"
 if [ -d "$UNITREE_EXAMPLE" ]; then
     touch "$UNITREE_EXAMPLE/COLCON_IGNORE"
 fi
@@ -155,7 +156,7 @@ fi
 # which was removed in later ROS2 versions. Strip the three Foxy-only blocks.
 # ---------------------------------------------------------------
 info "Patching unitree message packages for Jazzy..."
-UNITREE_MSG_ROOT="$SCRIPT_DIR/../external/unitree_ros2/cyclonedds_ws/src/unitree"
+UNITREE_MSG_ROOT="$REPO_DIR/external/unitree_ros2/cyclonedds_ws/src/unitree"
 for PKG in unitree_go unitree_hg unitree_api; do
     CMAKE="$UNITREE_MSG_ROOT/$PKG/CMakeLists.txt"
     [ -f "$CMAKE" ] || continue
@@ -184,7 +185,7 @@ done
 # (rclpy, etc.) without needing to install them again.
 # We never *activate* the venv here so colcon uses system Python.
 # ---------------------------------------------------------------
-VENV_DIR="$SCRIPT_DIR/../.venv"
+VENV_DIR="$REPO_DIR/.venv"
 if [ ! -d "$VENV_DIR" ]; then
     info "Creating Python venv at .venv (--system-site-packages)..."
     /usr/bin/python3 -m venv --system-site-packages "$VENV_DIR"
@@ -205,8 +206,13 @@ info "Checking Python packages in venv..."
 # Venv must NOT be active here — colcon needs system Python.
 # ---------------------------------------------------------------
 info "Building workspace..."
+<<<<<<< Updated upstream
 source /opt/ros/jazzy/setup.bash
+cd "$REPO_DIR"
+=======
+source /opt/ros/humble/setup.bash
 cd "$SCRIPT_DIR/.."
+>>>>>>> Stashed changes
 # unitree_mujoco uses /proc/self/exe to locate its install prefix, so its binary
 # must be physically copied (not symlinked) — build it separately without --symlink-install.
 colcon build --symlink-install --packages-skip unitree_mujoco

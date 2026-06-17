@@ -3,6 +3,11 @@
 ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained RL locomotion policy.
 
 ## TODOs
+
+> **CRITICAL**
+> - [ ] `pathFollower` / `localPlanner` autonomy mode is overridden to `false` by the joystick node on every `/joy` message (axes[4] < 0.1 at rest). The `autonomyMode: True` launch parameter has no effect while a controller is connected. Either kill `joy_node` before running nav (`ros2 node kill /joy_node`), push the right stick forward to hold axes[4] > 0.1, or patch pathFollower/localPlanner to only respect the joystick override when `joySpeedRaw > 0`.
+> - [ ] Move `registered_scan` publisher out of `a2_sim_utils` into a standalone `a2_utils` node so it can be used with real hardware and DLIO without a sim dependency (see DLIO integration notes below).
+
 - [x] Provide base docker setup for development
 - [x] Move dependency installations from install scripts to docker **Until this time, try not to recreate containers to save time**
 - [x] Decide whether install script should manage git submodules too (and thus lie inside the docker runtime)
@@ -97,31 +102,76 @@ docker compose down -v               # also remove volumes (wipes build cache)
 
 ## Launching Subsystems
 Launch the simulation:
+## Local development with a2.sh
+
+`a2.sh` is the main entry point for local (non-Docker) development. It deactivates any active conda environment before sourcing ROS so builds and launches are not affected by conda Python.
+
+### One-time shell setup
+
+Register the `a2` convenience function in your shell (run once):
+
 ```bash
-ros2 launch a2_ros sim.launch.py
-ros2 launch a2_ros sim.launch.py rviz:=true
-ros2 launch a2_ros sim.launch.py scene:=scene_terrain.xml
+source ./a2.sh --bashrc
 ```
 
-## Navigation
+This appends an `a2()` function to `~/.bashrc` so you can call `a2 <command>` from any directory. The `--source` sub-command is handled inline (via `source`) so it takes effect in the current shell; all other commands are forwarded to `a2.sh`.
 
-Requires two terminals. Start the simulation first, then the navigation stack.
+### Commands
+
+| Command | Description |
+|---|---|
+| `a2 --start` | Launch the MuJoCo simulation (`scene_maze.xml`) |
+| `a2 --walk` | Command the robot to walk (publishes `mode=3` on `/mode`) |
+| `a2 --nav` | Launch the navigation stack |
+| `a2 --exploration` | Launch autonomous exploration (TARE) |
+| `a2 --dlio` | Launch DLIO LiDAR-inertial odometry |
+| `a2 --source` | Source the workspace setup in the current shell |
+| `a2 --bashrc` | Add the `a2` function to `~/.bashrc` (idempotent) |
+| `a2 --init` | Open a 4-pane terminator window with commands pre-filled |
+
+Append `--rviz` to any launch command to open RViz alongside it, e.g.:
+
+```bash
+a2 --start --rviz
+a2 --nav --rviz
+```
+
+### Quick start with `--init`
+
+The fastest way to get going. Requires `terminator` (`sudo apt install terminator`) and `--bashrc` to have been run first:
+
+```bash
+a2 --init
+```
+
+This opens a single terminator window split into 4 panes, each with a command pre-filled and ready to run (press Enter or edit as needed):
+
+| Pane | Command | Background |
+|---|---|---|
+| Top-left | `a2 --start` | dark green |
+| Bottom-left | `a2 --walk` | dark blue |
+| Top-right | `a2 --nav` | dark red |
+| Bottom-right | `a2 --source` | dark amber |
+
+### Typical workflow
 
 **Terminal 1 — simulation:**
 ```bash
-ros2 launch a2_ros sim.launch.py scene:=scene_obstacles.xml
+a2 --start
 ```
 
-**Terminal 2 — stand then walk:**
+**Terminal 2 — walk:**
 ```bash
-cd src/control/a2_locomotion_controller/scripts
-./control_mode.sh --stand
-./control_mode.sh --walk
+a2 --walk
 ```
 
-**Terminal 3 — navigation:**
+**Terminal 3 — navigation / exploration / odometry:**
 ```bash
-ros2 launch a2_ros navigation.launch.py rviz:=true
+a2 --nav --rviz
+# or
+a2 --exploration --rviz
+# or
+a2 --dlio --rviz
 ```
 
 Set a 2D Nav Goal in RViz to send the robot to a target pose.

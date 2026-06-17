@@ -21,3 +21,6 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+external/gscam2/
+
+.claude/

@@ -1,0 +1,31 @@
+/**:
+  ros__parameters:
+    # A2 robot frame names
+    frames/odom: dlio_odom
+    frames/baselink: base_link
+    frames/lidar: front_lidar_link
+    frames/imu: imu_link
+
+    extrinsics/baselink2imu/t: [0.3509,  -0.00914,  0.13935]  # TODO CHECK THIS!! 
+    extrinsics/baselink2imu/R: [ 0.,  0.,  1.,
+                                 1.,  0.,  0.,
+                                 0.,  1.,  0. ]
+    extrinsics/baselink2lidar/t: [0.34218,  0.000,  0.17851]
+    extrinsics/baselink2lidar/R: [ 0.,  0.,  1.,
+                                   1.,  0.,  0.,
+                                   0.,  1.,  0. ]
+
+    # # front_lidar_link pose in base_link (from a2.urdf front_lidar_joint):
+    # #   xyz="0.33767 0.0 0.08134"  rpy="1.5708 0.0 1.5708"
+    # # R = Rz(pi/2) * Rx(pi/2) = [[0,0,1],[1,0,0],[0,1,0]]
+    # extrinsics/baselink2lidar/t: [0.33767, 0.0, 0.08134]
+    # extrinsics/baselink2lidar/R: [ 0., 0., 1.,
+    #                                 1., 0., 0.,
+    #                                 0., 1., 0. ]
+
+    # # imu_link is at origin of base_link (from a2.urdf imu_joint):
+    # #   xyz="0.0 0.0 0.0"  rpy="0 0 0"
+    # extrinsics/baselink2imu/t: [0.0, 0.0, 0.0]
+    # extrinsics/baselink2imu/R: [ 1., 0., 0.,
+    #                               0., 1., 0.,
+    #                               0., 0., 1. ]
