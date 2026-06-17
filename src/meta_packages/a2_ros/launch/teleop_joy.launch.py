@@ -26,8 +26,9 @@ def generate_launch_description():
         executable='teleop_joy',
         output='screen',
         parameters=[{
-            'linear_speed_limit': 0.1,
-            'angular_speed_limit': 0.1,
+            'linear_x_limit':  0.15,
+            'linear_y_limit':  0.10,
+            'angular_z_limit': 0.10,
             'use_sim_time': LaunchConfiguration('use_sim_time'),
         }]
     )

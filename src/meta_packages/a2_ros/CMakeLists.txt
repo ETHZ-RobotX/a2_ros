@@ -20,6 +20,7 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(a2_interfaces REQUIRED)
 
 # stand_example node (low-level stand/sit transitions)
 add_executable(stand_example
@@ -44,7 +45,7 @@ ament_target_dependencies(teleop_joy
   rclcpp
   geometry_msgs
   sensor_msgs
-  std_msgs
+  a2_interfaces
 )
 
 # nav_vel_relay: converts /nav_vel_cmd (TwistStamped) -> /cmd_vel (Twist)
