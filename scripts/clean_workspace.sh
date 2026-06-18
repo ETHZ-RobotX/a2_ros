@@ -26,8 +26,11 @@ info "Cleaning workspace..."
 for dir in "${TARGETS[@]}"; do
     target="$WORKSPACE_DIR/$dir"
     if [ -d "$target" ]; then
-        # Remove contents only — the directory itself may be a Docker volume mount point
-        rm -rf "${target:?}/"*
+        # Remove contents only — the directory itself may be a Docker volume mount
+        # point. -mindepth 1 keeps the dir; -delete also clears hidden files such
+        # as .colcon_install_layout, which a plain `rm -rf dir/*` would miss and
+        # which would otherwise cause colcon install-layout clashes.
+        find "${target:?}" -mindepth 1 -delete
         info "  Cleaned: $target"
     else
         info "  Skipped (not found): $target"
