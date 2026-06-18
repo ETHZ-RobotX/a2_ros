@@ -1,6 +1,9 @@
 build:
   parallel-workers: 6
   symlink-install: true
+  merge-install: true
+  cmake-args:
+    - -DCMAKE_BUILD_TYPE=Release
   build-base: /a2_ros/build
   install-base: /a2_ros/install
   base-paths:
