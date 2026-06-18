@@ -24,3 +24,6 @@ Thumbs.db
 external/gscam2/
 
 .claude/
+
+# untracked
+untracked/
