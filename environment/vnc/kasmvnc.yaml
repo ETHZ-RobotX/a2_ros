@@ -1,0 +1,32 @@
+# KasmVNC server config for the a2_ros browser desktop.
+# Trimmed from smb_ros2_workspace's config for a local dev tool: HTTP (no SSL),
+# served on 8444. Override per-user by editing ~/.vnc/kasmvnc.yaml in the image.
+desktop:
+  resolution:
+    width: 1600
+    height: 900
+  allow_resize: true
+  pixel_depth: 24
+
+network:
+  protocol: http
+  interface: 0.0.0.0
+  websocket_port: 8444
+  ssl:
+    require_ssl: false
+  udp:
+    public_ip: 127.0.0.1
+
+user_session:
+  # Long-lived dev session — don't drop on idle.
+  idle_timeout: never
+  concurrent_connections_prompt: false
+
+encoding:
+  max_frame_rate: 30
+  rect_encoding_mode:
+    min_quality: 6
+    max_quality: 9
+
+runtime_configuration:
+  allow_client_to_override_kasm_server_settings: true

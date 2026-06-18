@@ -1,0 +1,25 @@
+# Unified-GUI override for macOS / Windows.
+#
+# Lets a2_ros_dev render GUI apps (RViz, the MuJoCo viewer, ...) onto the
+# KasmVNC display server (the `vnc` service) by sharing its X socket — so you
+# can build, run, AND visualize all in a2_ros_dev, viewing the result in the
+# browser at https://localhost:8444.
+#
+# Usage (macOS / Windows):
+#   docker compose -f compose.yaml -f compose.vnc.yml --profile vnc up -d
+#   docker compose exec a2_ros_dev bash -lc 'DISPLAY=:20 rviz2'
+#
+# Do NOT use this on Linux — there a2_ros_dev should keep native X11 forwarding
+# through the host's /tmp/.X11-unix (the base compose.yaml), not this shared
+# VNC socket.
+services:
+  a2_ros_dev:
+    environment:
+      # No GPU in Docker on macOS/Windows — software-render OpenGL apps.
+      - LIBGL_ALWAYS_SOFTWARE=1
+    volumes:
+      # Replace the host X11 bind mount with the shared KasmVNC socket volume,
+      # so DISPLAY=:20 in a2_ros_dev reaches the vnc server's X server.
+      - type: volume
+        source: x11
+        target: /tmp/.X11-unix

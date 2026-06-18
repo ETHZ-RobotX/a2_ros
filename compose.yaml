@@ -17,7 +17,12 @@ x-common: &common
     memlock: -1
   # gpus: all
   environment:
-    - DISPLAY=${DISPLAY}
+    # Linux: inherits the host's DISPLAY (e.g. :0) for native X11 forwarding
+    # through the bind-mounted /tmp/.X11-unix. macOS/Windows: the host has no X
+    # server, so default to :20 — the KasmVNC display in the `vnc` service
+    # (a high number that won't collide with host :0/:1 or other VNC instances).
+    # (Also silences the "DISPLAY variable is not set" warning on macOS/Windows.)
+    - DISPLAY=${DISPLAY:-:20}
     - QT_X11_NO_MITSHM=1
   working_dir: /a2_ros
   command: [ "bash" ]
@@ -188,6 +193,83 @@ services:
     restart: unless-stopped
     command: [ "ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd" ]
 
+  # ---- Foxglove bridge (opt-in) -------------------------------------------
+  # Exposes ROS topics to Foxglove Studio over a WebSocket at ws://localhost:8765.
+  # Start it explicitly:  docker compose --profile foxglove up -d foxglove
+  # Profile-gated so it never auto-starts for Linux/native-RViz users or robot
+  # deploys. The command sources scripts/setup.sh so the bridge joins the sim
+  # Zenoh graph (matching ROS_DOMAIN_ID / middleware config) and can resolve
+  # package:// meshes from the built workspace overlay (dev_colcon_install).
+  # Reachable from the host only with Docker Desktop "host networking" enabled.
+  foxglove:
+    <<: *common
+    profiles: [ foxglove ]
+    build:
+      context: .
+      dockerfile: ./environment/Dockerfile.dev
+      target: dev
+      args:
+        UID: ${HOST_UID:-1000}
+        GID: ${HOST_GID:-1000}
+    depends_on:
+      - zenoh_router_sim
+    restart: unless-stopped
+    command:
+      - bash
+      - -c
+      - "source /a2_ros/scripts/setup.sh && exec ros2 launch foxglove_bridge foxglove_bridge_launch.xml"
+    volumes:
+      - *vol-workspace
+      - type: volume
+        source: dev_colcon_install
+        target: /a2_ros/install
+
+  # ---- KasmVNC desktop (opt-in) -------------------------------------------
+  # Starts a KasmVNC X server + XFCE desktop on display :20, served at
+  # https://localhost:8444 (user: ubuntu, password: VNC_PASSWORD).
+  # It mounts the workspace + the shared build/install volumes, so its desktop
+  # terminal is a full ROS environment (on the same Zenoh graph as a2_ros_dev,
+  # sharing the same built workspace). Two ways to use it:
+  #   - work IN the browser desktop: open a terminal there, run sim/RViz/MuJoCo
+  #     (DISPLAY=:20 is already the default), windows appear in the same desktop.
+  #   - work FROM a2_ros_dev and render here, via the X-socket override:
+  #       docker compose -f compose.yaml -f compose.vnc.yml --profile vnc up -d
+  #       docker compose exec a2_ros_dev bash -lc 'DISPLAY=:20 rviz2'
+  # Reachable from the host only with Docker Desktop "host networking" enabled.
+  # Profile-gated; built from the `vnc` image stage (KasmVNC + XFCE).
+  vnc:
+    <<: *common
+    profiles: [ vnc ]
+    build:
+      context: .
+      dockerfile: ./environment/Dockerfile.dev
+      target: vnc
+      args:
+        UID: ${HOST_UID:-1000}
+        GID: ${HOST_GID:-1000}
+    restart: unless-stopped
+    # Start the X server, then allow local (same-host) clients so other
+    # containers sharing the X socket can connect, and idle on the session log.
+    command:
+      - bash
+      - -c
+      - "vncserver -kill :20 >/dev/null 2>&1 || true; rm -f /tmp/.X11-unix/X20 /tmp/.X20-lock; vncserver :20 && DISPLAY=:20 xhost +local: >/dev/null 2>&1; exec tail -F /home/ubuntu/.vnc/*.log"
+    volumes:
+      # Expose the X server's socket (/tmp/.X11-unix/X20) on a named volume so
+      # other containers (a2_ros_dev) can render to this display.
+      - type: volume
+        source: x11
+        target: /tmp/.X11-unix
+      # Workspace + shared build/install volumes, so the desktop terminal is a
+      # full ROS env sharing the same built workspace as a2_ros_dev.
+      - *vol-workspace
+      - type: volume
+        source: dev_colcon_build
+        target: /a2_ros/build
+      - type: volume
+        source: dev_colcon_install
+        target: /a2_ros/install
+
 volumes:
   dev_bash_history:
   dev_colcon_build:
@@ -197,3 +279,6 @@ volumes:
   robot_colcon_build:
   robot_colcon_install:
   robot_rosdep_cache:
+  # Shares the KasmVNC X socket (/tmp/.X11-unix) between the vnc server and
+  # a2_ros_dev (see compose.vnc.yml) so GUI apps in dev can render to display :20.
+  x11:

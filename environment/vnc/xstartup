@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# KasmVNC session startup — a standard XFCE desktop. Gives a full panel, dock,
+# taskbar, file manager, and terminal in the browser, so GUI tools (RViz, the
+# MuJoCo viewer, ...) can be launched and managed from within the session. You
+# can also push apps in from outside against this display (DISPLAY=:20 by
+# default), e.g.:
+#   docker compose exec a2_ros_dev bash -lc 'DISPLAY=:20 rviz2'
+
+# Avoid inheriting a stale session/bus from the parent environment.
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+export XDG_SESSION_TYPE=x11
+export XDG_CURRENT_DESKTOP=XFCE
+
+# Start the XFCE session under its own DBus. `exec` so it becomes the session's
+# main process.
+exec dbus-launch --exit-with-session startxfce4

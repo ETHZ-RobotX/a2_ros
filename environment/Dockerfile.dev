@@ -310,3 +310,50 @@ ENV COLCON_DEFAULTS_FILE=/a2_ros/environment/colcon/robot.defaults.yaml
 # Source ROS environment
 RUN echo "source ${PWD}/scripts/setup.sh" >> /home/$USER/.bashrc
 
+################################################################################
+# VNC Stage (optional, opt-in via the `vnc` compose profile).                  #
+# Adds KasmVNC + a minimal Openbox WM on top of the dev image so GUI tools     #
+# (RViz, the joint_state_publisher GUI, ...) can be viewed in a browser on     #
+# hosts without native X11 (macOS / Windows). NOT part of the default images.  #
+################################################################################
+FROM dev AS vnc
+ARG USER
+ENV USER=${USER:-ubuntu}
+ARG KASMVNC_VERSION=1.3.4
+ARG VNC_PASSWORD=robotx
+
+# No GPU in Docker on macOS/Windows — force Mesa software GL so OpenGL apps
+# (RViz, the MuJoCo viewer) render instead of crashing on missing hardware GL.
+ENV LIBGL_ALWAYS_SOFTWARE=1
+
+USER root
+COPY environment/vnc/setup-kasmvnc.sh /tmp/setup-kasmvnc.sh
+RUN KASMVNC_VERSION="${KASMVNC_VERSION}" bash /tmp/setup-kasmvnc.sh && rm /tmp/setup-kasmvnc.sh
+
+# Session (Openbox) + KasmVNC server config, baked into the user's ~/.vnc.
+COPY --chown=${USER}:${USER} environment/vnc/kasmvnc.yaml /home/${USER}/.vnc/kasmvnc.yaml
+COPY --chown=${USER}:${USER} environment/vnc/xstartup     /home/${USER}/.vnc/xstartup
+RUN chmod +x /home/${USER}/.vnc/xstartup
+
+# Let the user read the snakeoil SSL key (ssl-cert package keeps it root:ssl-cert 0640).
+RUN usermod -aG ssl-cert ${USER}
+
+# Pre-create the X11 socket dir at 1777 (sticky, world-writable, like /tmp) so
+# that when it's backed by the shared `x11` named volume, the X server (running
+# as the unprivileged user) can still create /tmp/.X11-unix/X20 in it, and other
+# containers mounting the same volume can read it.
+RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+USER $USER
+# Create the VNC password non-interactively (override with --build-arg VNC_PASSWORD=...).
+# Non-fatal: if the kasmvncpasswd flags differ on your KasmVNC build, the image
+# still builds and you can set the password by hand — see the warning in the log.
+RUN printf '%s\n%s\n' "${VNC_PASSWORD}" "${VNC_PASSWORD}" | kasmvncpasswd -u "${USER}" -w \
+    || echo "[kasmvnc] WARNING: password not set — adjust the kasmvncpasswd call for your KasmVNC version"
+
+# Mark the desktop as already chosen so KasmVNC's select-de.sh skips its
+# interactive prompt and uses our Openbox xstartup directly.
+RUN touch /home/${USER}/.vnc/.de-was-selected
+
+# Web desktop is served on 8444 (see environment/vnc/kasmvnc.yaml).
+EXPOSE 8444
