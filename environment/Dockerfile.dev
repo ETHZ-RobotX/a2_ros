@@ -224,9 +224,17 @@ RUN echo "[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> /home/$USER/.bashrc && \
     echo "export _colcon_cd_root=/opt/ros/$ROS_DISTRO/" >> /home/$USER/.bashrc && \
     echo 'eval "$(register-python-argcomplete ros2)" 2>/dev/null || true' >> /home/$USER/.bashrc
 
-# Setup workspace dirs
-RUN mkdir -p /a2_ros/build /a2_ros/install && \
-    chown -R $USER:$USER /a2_ros
+# Setup workspace dirs.
+# Colcon artefacts (build/install/log) live OUTSIDE the bind-mounted source tree
+# (/a2_ros) so they never land in the host repo. They are backed by named volumes
+# mounted at /a2_ros_ws/* (see compose.yaml). Creating + chowning the dirs here
+# makes those volumes come up owned by $USER on first mount.
+# - build-base/install-base: set in environment/colcon/*.defaults.yaml
+# - log-base: set via COLCON_LOG_PATH (a global colcon arg, not expressible per-verb)
+ENV A2_WS_ROOT=/a2_ros_ws
+ENV COLCON_LOG_PATH=/a2_ros_ws/log
+RUN mkdir -p /a2_ros /a2_ros_ws/build /a2_ros_ws/install /a2_ros_ws/log && \
+    chown -R $USER:$USER /a2_ros_ws /a2_ros
 WORKDIR /a2_ros
 
 USER $USER

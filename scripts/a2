@@ -97,7 +97,7 @@ case "$CMD" in
         info "WORKSPACE_DIR        = $WORKSPACE_DIR"
         ;;
     log)
-        LOG_DIR="$WORKSPACE_DIR/log"
+        LOG_DIR="${A2_WS_ROOT:-$WORKSPACE_DIR}/log"
         LATEST=$(find "$LOG_DIR" -name "*.log" 2>/dev/null | sort -t/ -k1 | tail -1)
         if [[ -z "$LATEST" ]]; then
             error "No build logs found in $LOG_DIR"

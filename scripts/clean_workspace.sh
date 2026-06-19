@@ -6,13 +6,16 @@ source ./scripts/common.sh
 
 # ---------------------------------------------------------------
 # Clean workspace — removes colcon build artefacts.
+# Artefacts live in $A2_WS_ROOT (set in the Docker image, outside the source
+# tree); fall back to the source dir for native builds.
 # ---------------------------------------------------------------
-TARGETS=("build" "install" "log")
+WS_ART="${A2_WS_ROOT:-$WORKSPACE_DIR}"
+TARGETS=("$WS_ART/build" "$WS_ART/install" "$WS_ART/log")
 
-warn "This will delete the following directories under $WORKSPACE_DIR:"
-for dir in "${TARGETS[@]}"; do
-    if [ -d "$WORKSPACE_DIR/$dir" ]; then
-        echo "    $WORKSPACE_DIR/$dir"
+warn "This will delete the following directories:"
+for target in "${TARGETS[@]}"; do
+    if [ -d "$target" ]; then
+        echo "    $target"
     fi
 done
 
@@ -23,8 +26,7 @@ if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
 fi
 
 info "Cleaning workspace..."
-for dir in "${TARGETS[@]}"; do
-    target="$WORKSPACE_DIR/$dir"
+for target in "${TARGETS[@]}"; do
     if [ -d "$target" ]; then
         # Remove contents only — the directory itself may be a Docker volume mount
         # point. -mindepth 1 keeps the dir; -delete also clears hidden files such

@@ -13,9 +13,12 @@ _SETUP_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$_SETUP_SCRIPT_DIR/common.sh"
 
 # --- Workspace install ---
-if [ -f "$WORKSPACE_DIR/install/setup.bash" ]; then
-    source "$WORKSPACE_DIR/install/setup.bash"
-    echo "[a2_ros] Sourced workspace: $WORKSPACE_DIR"
+# Colcon artefacts live in $A2_WS_ROOT (set in the Docker image, outside the
+# bind-mounted source tree); fall back to the source dir for native builds.
+_WS_ROOT="${A2_WS_ROOT:-$WORKSPACE_DIR}"
+if [ -f "$_WS_ROOT/install/setup.bash" ]; then
+    source "$_WS_ROOT/install/setup.bash"
+    echo "[a2_ros] Sourced workspace: $_WS_ROOT"
 else
     echo "[a2_ros] WARNING: Workspace not built yet."
     echo "  Run:  cd $WORKSPACE_DIR && colcon build --symlink-install"
