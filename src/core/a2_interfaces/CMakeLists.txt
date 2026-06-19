@@ -13,8 +13,13 @@ set(msg_types
   "msg/OperatingMode.msg"
 )
 
+set(srv_types
+  "srv/SetOperatingMode.srv"
+)
+
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_types}
+  ${srv_types}
 )
 
 ament_export_dependencies(rosidl_default_runtime)

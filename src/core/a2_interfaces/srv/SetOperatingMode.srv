@@ -1,0 +1,8 @@
+# Request a mode transition on the locomotion controller's mode FSM.
+# Mode values mirror the constants in a2_interfaces/msg/OperatingMode:
+#   0 ESTOP  1 STAND_DOWN  2 STAND_UP  3 BALANCE_STAND  4 VELOCITY_MOVE  5 FREE
+uint8 mode
+---
+bool success          # true if the FSM accepted the transition
+uint8 current_mode    # the FSM's mode after the request (unchanged if rejected)
+string message        # human-readable detail (e.g. rejection reason)

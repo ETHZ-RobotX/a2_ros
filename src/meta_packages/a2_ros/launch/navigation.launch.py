@@ -19,10 +19,12 @@ Usage:
   # Terminal 2 (after sim is up)
   ros2 launch a2_ros navigation.launch.py
 
-  # Then set the robot to stand (2) then locomotion (3):
-  ros2 topic pub /a2/mode a2_interfaces/msg/OperatingMode "mode: 2"   # stand up
-  ros2 topic pub /a2/mode a2_interfaces/msg/OperatingMode "mode: 3"   # unlock joints
-  ros2 topic pub /a2/mode a2_interfaces/msg/OperatingMode "mode: 4"   # locomotion
+  # Then bring the robot up to locomotion. These go through the /a2/set_mode
+  # service (via the `a2` CLI), which reports whether each transition was
+  # accepted by the FSM:
+  a2 stand    # mode 2: stand up
+  a2 unlock   # mode 3: unlock joints (balance stand)
+  a2 walk     # mode 4: locomotion
 
   # Send a navigation goal in RViz using the 'Goalpoint' button,
   # or publish directly:

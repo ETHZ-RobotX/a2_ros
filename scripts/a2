@@ -8,6 +8,30 @@ WORKSPACE_DIR="${WORKSPACE_DIR:-$(dirname "$SCRIPT_DIR")}"
 # shellcheck source=common.sh
 source "$WORKSPACE_DIR/scripts/common.sh"
 
+# Request a mode transition via the /a2/set_mode service and report the FSM's
+# accept/reject response. The FSM (see a2_utils/mode_fsm) only allows valid
+# transitions, e.g. STAND_DOWN(1) -> STAND_UP(2) -> BALANCE_STAND(3) ->
+# VELOCITY_MOVE(4). Returns 0 if the transition was accepted, 1 otherwise (so
+# callers can chain stages and stop on the first rejection).
+# NOTE: acceptance means the FSM took the transition, not that the robot has
+# physically finished the motion.
+_set_mode() {
+    local mode="$1" out msg
+    if ! out="$(ros2 service call /a2/set_mode a2_interfaces/srv/SetOperatingMode "{mode: $mode}" 2>&1)"; then
+        error "Mode $mode: service call failed (is the locomotion controller running?)"
+        echo "$out"
+        return 1
+    fi
+    # The service reports a human-readable result, e.g. "Now in STAND_UP" or
+    # "Cannot enter VELOCITY_MOVE from STAND_DOWN".
+    msg="$(printf '%s' "$out" | grep -oP "message='\K[^']*" || true)"
+    if printf '%s' "$out" | grep -q 'success=True'; then
+        info "${msg:-Mode $mode accepted}"
+        return 0
+    fi
+    error "${msg:-Mode $mode rejected}"
+    return 1
+}
 
 _usage() {
     cat <<EOF
@@ -21,11 +45,12 @@ Workspace:
   log                Tail the latest colcon build log
 
 Robot:
-  start [--rviz] [--dlio]  Launch MuJoCo simulation
-  walk               Command robot to walk   (mode=4)
-  unlock             Command robot to unlock (mode=3)
-  stand              Command robot to stand  (mode=2)
-  sit                Command robot to sit    (mode=1)
+  sim   [--rviz] [--dlio]  Launch MuJoCo simulation
+  walk               Command robot to walk    (mode=4)
+  stop               Stop moving, keep balance (mode=3)
+  unlock             Command robot to unlock  (mode=3)
+  stand              Command robot to stand   (mode=2)
+  sit                Command robot to sit     (mode=1)
   nav   [--rviz]     Launch navigation stack
   explore [--rviz]   Launch autonomous exploration (TARE)
   dlio  [--rviz]     Launch DLIO LiDAR-inertial odometry
@@ -106,20 +131,23 @@ case "$CMD" in
         info "Tailing: $LATEST"
         tail -f "$LATEST"
         ;;
-    start)
+    sim)
         ros2 launch a2_ros sim.launch.py rviz:=$RVIZ dlio:=$DLIO
         ;;
     walk)
-        ros2 topic pub --once /a2/mode a2_interfaces/msg/OperatingMode "mode: 4"
+        _set_mode 4
+        ;;
+    stop)
+        _set_mode 3
         ;;
     unlock)
-        ros2 topic pub --once /a2/mode a2_interfaces/msg/OperatingMode "mode: 3"
+        _set_mode 3
         ;;
     stand)
-        ros2 topic pub --once /a2/mode a2_interfaces/msg/OperatingMode "mode: 2"
+        _set_mode 2
         ;;
     sit)
-        ros2 topic pub --once /a2/mode a2_interfaces/msg/OperatingMode "mode: 1"
+        _set_mode 1
         ;;
     nav)
         ros2 launch a2_ros navigation.launch.py rviz:=$RVIZ
@@ -162,7 +190,11 @@ case "$CMD" in
         ros2 run plotjuggler plotjuggler
         ;;
     foxglove)
-        ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8765
+        # In sim, align the bridge's clock with the simulator (/clock); on the
+        # real robot leave it on wall-clock time.
+        FOXGLOVE_ARGS=(port:=8765)
+        [ "$A2_MODE" = "sim" ] && FOXGLOVE_ARGS+=(use_sim_time:=true)
+        ros2 launch foxglove_bridge foxglove_bridge_launch.xml "${FOXGLOVE_ARGS[@]}"
         ;;
     router)
         bash "$WORKSPACE_DIR/scripts/start_zenoh_router.sh"
