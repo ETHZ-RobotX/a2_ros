@@ -127,9 +127,6 @@ def generate_launch_description():
             executable='pathFollower',
             name='pathFollower',
             output='screen',
-            remappings=[
-                ('/nav_vel_cmd', '/cmd_vel'), # Since cmd_vel now needs TwistStamped
-            ],
             parameters=[{
                 'twoWayDrive':     False,
                 'lookAheadDis':    0.4,

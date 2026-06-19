@@ -23,20 +23,34 @@ def generate_launch_description():
     bridge_launch_dir = get_package_share_directory('a2_unitree_bridge')
     a2_ros_launch_dir = os.path.join(get_package_share_directory('a2_ros'), 'launch')
 
+    a2_ros_config_dir = os.path.join(get_package_share_directory('a2_ros'), 'config')
+
     bridge_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(bridge_launch_dir, 'launch', 'robot.launch.py')
         )
     )
 
-    # joy_node = Node(
-    #     package='joy',
-    #     executable='joy_node',
-    #     name='joy_node',
-    #     parameters=[{
-    #         'deadzone': 0.05,
-    #         'autorepeat_rate': 500.0,
-    #     }]
+    joy_node = Node(
+        package='joy',
+        executable='joy_node',
+        name='joy_node',
+        parameters=[{
+            'deadzone': 0.01,
+            'autorepeat_rate': 1000.0,
+        }]
+    )
+
+    # twist_mux_node = Node(
+    #     package='twist_mux',
+    #     executable='twist_mux',
+    #     name='twist_mux',
+    #     output='screen',
+    #         remappings={('/cmd_vel_out', '/cmd_vel')},
+    #     parameters=[
+    #         os.path.join(a2_ros_config_dir, 'twist_mux', 'twist_mux_config.yaml'),
+    #         {'use_sim_time': False},
+    #     ]
     # )
 
     teleop_node = Node(
@@ -58,7 +72,8 @@ def generate_launch_description():
 
     return LaunchDescription([
         bridge_launch,
-        # joy_node,
+        joy_node,
+        # twist_mux_node,
         teleop_node,
         camera_launch,
     ])

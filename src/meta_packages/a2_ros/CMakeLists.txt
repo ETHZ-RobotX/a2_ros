@@ -48,7 +48,6 @@ ament_target_dependencies(teleop_joy
   a2_interfaces
 )
 
-# nav_vel_relay: converts /nav_vel_cmd (TwistStamped) -> /cmd_vel (Twist)
 add_executable(nav_vel_relay
   src/nav_vel_relay.cpp
 )

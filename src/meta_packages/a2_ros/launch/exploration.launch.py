@@ -7,7 +7,6 @@ Starts the full exploration stack on top of the running sim:
   - local_planner        : obstacle-aware path selection
   - pathFollower         : converts waypoints to /cmd_vel
   - tare_planner         : autonomous coverage exploration (replaces far_planner)
-  - nav_vel_relay        : converts /nav_vel_cmd (TwistStamped) -> /cmd_vel (Twist)
 
 Prerequisites (provided by sim.launch.py + a2_bridge):
   /state_estimation  - ground-truth odometry (published by a2_bridge in a2_sim_utils)
@@ -157,7 +156,6 @@ def generate_launch_description():
             parameters=[tare_config],
         ),
 
-        # ---- relay: /nav_vel_cmd (TwistStamped) -> /cmd_vel (Twist) ----
         Node(
             package='a2_ros',
             executable='nav_vel_relay',
