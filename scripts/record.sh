@@ -5,7 +5,9 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 # ---------------------------------------------------------------
 # Record ROS 2 topics to MCAP format.
-# Bags are written to $ROS_BAGS_DIR (default: $WORKSPACE_DIR/bags).
+# Bags are written to $ROS_BAGS_DIR (default: $A2_WS_ROOT/bags, i.e. the
+# workspace artefacts root, falling back to $WORKSPACE_DIR/bags outside the
+# container).
 #
 # YAML config format (--config):
 #   all: true
@@ -82,7 +84,7 @@ if ! $RECORD_ALL && [[ -z "$TOPICS" ]]; then
 fi
 
 # --- Output path ---
-BAG_DIR="${ROS_BAGS_DIR:-$WORKSPACE_DIR/bags}"
+BAG_DIR="${ROS_BAGS_DIR:-${A2_WS_ROOT:-$WORKSPACE_DIR}/bags}"
 mkdir -p "$BAG_DIR"
 STAMP=$(date +"%Y%m%d_%H%M%S")
 OUT="$BAG_DIR/bag_${STAMP}${SUFFIX:+_$SUFFIX}"

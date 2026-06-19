@@ -50,7 +50,7 @@ x-vol-bags: &vol-bags
   # Override ROS_BAGS_DIR in a .env file to point at your archive directory.
   type: bind
   source: ${ROS_BAGS_DIR:-./bags}
-  target: /a2_ros/bags
+  target: /a2_ros_ws/bags
 
 services:
   # Build-only service for the builder stage (Unitree SDK, MuJoCo, Python venv).
