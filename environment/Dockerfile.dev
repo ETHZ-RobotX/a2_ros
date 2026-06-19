@@ -7,6 +7,11 @@ ARG USER=ubuntu
 #   docker pull ros:jazzy && docker inspect ros:jazzy --format '{{index .RepoDigests 0}}'
 ARG ROS_IMAGE=ros@sha256:eac11a5285beeb1e1884e71f7091c610e08452e823bfb3f43afaa334375325f6
 
+# ARGs used in FROM instructions must be in global scope (before the first FROM).
+# Default pulls the published image; override to build from source:
+#   docker build --build-arg A2_BASE_IMAGE=a2_base ...
+ARG A2_BASE_IMAGE=ghcr.io/ethz-robotx/a2_ros/a2_base:main
+
 # Builder image for non-ros dependencies to reduce source code footprint
 FROM ${ROS_IMAGE} AS builder
 ARG MUJOCO_VERSION
@@ -179,7 +184,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Adds shell UX and the ubuntu user's home environment on top of a2_base.      #
 # UID/GID are baked in at build time to match the host user.                   #
 ################################################################################
-FROM a2_base AS a2_with_user
+FROM ${A2_BASE_IMAGE} AS a2_with_user
 ARG ROS_DISTRO
 ARG USER=ubuntu
 ARG UID

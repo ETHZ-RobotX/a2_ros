@@ -1,0 +1,119 @@
+name: Publish base docker images
+
+on:
+  # Push to main branch publishes the image to the registry
+  push:
+    branches: [ 'main' ]
+  # Pull Request to main branch verifies image builds successfully
+  pull_request:
+    branches: [ 'main' ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+
+    # `GITHUB_TOKEN` permissions for the job
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT }}
+
+      # Set up BuildKit Docker container builder to be able to build
+      # multi-platform images and export cache
+      # https://github.com/docker/setup-buildx-action
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+
+      # GHCR requires lowercase repository names; github.repository preserves case.
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME_LC=${IMAGE_NAME,,}" >> $GITHUB_ENV
+        env:
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+
+      # Login is required for both pushing images and pulling cache from the
+      # private registry. On PRs from forks GITHUB_TOKEN lacks write scope, so
+      # we skip the push but still log in to allow registry cache reads.
+      - name: Log in to registry ${{ env.REGISTRY }}
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── builder stage ────────────────────────────────────────────────────────
+      # Builds non-ROS dependencies (Unitree SDK, MuJoCo, ONNX Runtime, Python
+      # venv) that change rarely and are expensive to compile.
+
+      - name: Extract Docker metadata (builder)
+        id: meta-builder
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}/builder
+
+      - name: Build and push builder stage
+        id: push-builder
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        with:
+          context: .
+          file: ./environment/Dockerfile.dev
+          target: builder
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-builder.outputs.tags }}
+          labels: ${{ steps.meta-builder.outputs.labels }}
+          cache-from: |
+            type=gha,scope=builder
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}/builder:buildcache
+          cache-to: |
+            type=gha,scope=builder,mode=max
+            ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}/{1}/builder:buildcache,mode=max', env.REGISTRY, env.IMAGE_NAME_LC) || '' }}
+
+      # ── a2_base stage ────────────────────────────────────────────────────────
+      # Installs all apt packages (ROS, perception, dev tools) and the Python
+      # venv on top of the upstream ROS image. Changes when deps are added.
+
+      - name: Extract Docker metadata (a2_base)
+        id: meta-a2-base
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}/a2_base
+
+      - name: Build and push a2_base stage
+        id: push-a2-base
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        with:
+          context: .
+          file: ./environment/Dockerfile.dev
+          target: a2_base
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-a2-base.outputs.tags }}
+          labels: ${{ steps.meta-a2-base.outputs.labels }}
+          cache-from: |
+            type=gha,scope=a2_base
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}/a2_base:buildcache
+          cache-to: |
+            type=gha,scope=a2_base,mode=max
+            ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}/{1}/a2_base:buildcache,mode=max', env.REGISTRY, env.IMAGE_NAME_LC) || '' }}
+
+      # TODO: Attestation feature not available to private repositories.
+      # Consider doing this once repo is public.
+      #
+      # - name: Generate artifact attestation
+      #   uses: actions/attest-build-provenance@v3
+      #   with:
+      #     subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}
+      #     subject-digest: ${{ steps.push-a2-base.outputs.digest }}
+      #     push-to-registry: true

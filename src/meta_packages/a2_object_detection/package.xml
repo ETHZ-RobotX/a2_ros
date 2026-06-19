@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>a2_object_detection</name>
+  <version>0.0.0</version>
+  <description>
+    Meta-package for the A2 object detection stack
+
+    Build only this group:
+      colcon build --packages-up-to a2_perception
+  </description>
+  <maintainer email="per.a.frivik@gmail.com">perfrivik</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>object_detection</exec_depend>
+  <exec_depend>object_detection_msgs</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

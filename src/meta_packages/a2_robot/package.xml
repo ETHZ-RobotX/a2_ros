@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>a2_robot</name>
+  <version>0.0.0</version>
+  <description>
+    Meta-package for the A2 robot stack.
+    Depends on every package needed to run the stack on the Robot
+
+    Build only this group:
+      colcon build --packages-up-to a2_robot
+  </description>
+  <maintainer email="per.a.frivik@gmail.com">perfrivik</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Dependent Meta Packages -->
+  <exec_depend>a2_ros</exec_depend>
+  <exec_depend>a2_state_estimation</exec_depend>
+  <exec_depend>a2_object_detection</exec_depend>
+  <exec_depend>hesai_ros_driver</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

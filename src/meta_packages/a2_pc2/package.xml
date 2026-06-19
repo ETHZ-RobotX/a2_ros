@@ -1,33 +1,40 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>a2_nav</name>
+  <name>a2_pc2</name>
   <version>0.0.0</version>
   <description>
-    Meta-package for the A2 Navigation. Depends on every package
-    needed to run the Navigation Launch File
+    Meta-package for the A2 real-hardware stack running on PC2
 
     Build only this group:
-      colcon build --packages-up-to a2_sim
+      colcon build --packages-up-to a2_pc2
   </description>
-  <maintainer email="per.a.frivik@gmail.com">perfrivik</maintainer>
+  <maintainer email="44103483+rbharadwaj9@users.noreply.github.com">Rajiv Bharadwaj</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <!-- Core -->
-  <exec_depend>a2_ros</exec_depend>
   <exec_depend>a2_interfaces</exec_depend>
   <exec_depend>a2_utils</exec_depend>
   <exec_depend>a2_description</exec_depend>
   <exec_depend>a2_deployment_config</exec_depend>
+
+  <!-- Hardware bridge and controller -->
   <exec_depend>a2_unitree_bridge</exec_depend>
 
-  <!-- Navigation-specific -->
-  <exec_depend>terrain_analysis</exec_depend>
-  <exec_depend>terrain_analysis_ext</exec_depend>
-  <exec_depend>local_planner</exec_depend>
-  <exec_depend>far_planner</exec_depend>
+  <!-- Teleop Joy -->
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+
+  <!-- Camera Driver -->
+  <exec_depend>gscam2</exec_depend>
+
+
+  <!-- Unitree SDK packages (external submodules) -->
+  <exec_depend>unitree_api</exec_depend>
+  <exec_depend>unitree_go</exec_depend>
+  <exec_depend>unitree_hg</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

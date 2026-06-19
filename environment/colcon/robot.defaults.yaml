@@ -14,5 +14,6 @@ build:
     - a2_sim_utils
     - unitree_ros2_example
     - a2_locomotion_controller
-    - object_detection
-    - object_detection_msgs
+    - a2_pc2
+    - a2_sim
+    - a2_sim_full

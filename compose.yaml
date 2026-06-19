@@ -23,6 +23,7 @@ x-common: &common
     # (a high number that won't collide with host :0/:1 or other VNC instances).
     # (Also silences the "DISPLAY variable is not set" warning on macOS/Windows.)
     - DISPLAY=${DISPLAY:-:20}
+    - XAUTHORITY=/home/ubuntu/.Xauthority
     - QT_X11_NO_MITSHM=1
   working_dir: /a2_ros
   command: [ "bash" ]
@@ -129,8 +130,8 @@ services:
         source: dev_rosdep_cache
         target: /home/ubuntu/.ros
 
-  # NUC (192.168.124.124). Does NOT start a Zenoh router — its nodes connect to
-  # the router running on pc2 (ZENOH_ROUTER_IP_ROBOT in .env). Start the router
+  # NUC (192.168.124.124). Deployed directly on the NUC.
+  # The router runs on pc2 (ZENOH_ROUTER_IP_ROBOT in .env). Start the router
   # via the a2_ros_pc2 service on pc2 instead.
   a2_ros_nuc:
     <<: *common
@@ -158,90 +159,30 @@ services:
       - *vol-workspace
       - *vol-bags
       - type: volume
-        source: robot_bash_history
+        source: nuc_bash_history
         target: /home/ubuntu/.bash_history_dir
       - type: volume
-        source: robot_colcon_build
+        source: nuc_colcon_build
         target: /a2_ros_ws/build
       - type: volume
-        source: robot_colcon_install
+        source: nuc_colcon_install
         target: /a2_ros_ws/install
       - type: volume
-        source: robot_colcon_log
+        source: nuc_colcon_log
         target: /a2_ros_ws/log
       - type: volume
-        source: robot_rosdep_cache
+        source: nuc_rosdep_cache
         target: /home/ubuntu/.ros
 
-  # pc2 (192.168.124.162). Starts the Zenoh router (via depends_on) plus its ROS
-  # nodes. This is the single router host for the robot network — every robot
-  # node (including a2_ros_nuc on .124) discovers through it. pc2 runs the core
-  # native stack (camera, low-level control) and is started first, so it hosts
-  # the discovery rendezvous. Matches ZENOH_ROUTER_IP_ROBOT in .env. Bring it up
-  # with:  docker compose up -d a2_ros_pc2
-  a2_ros_pc2:
-    <<: *common
-    # Shared image with a2_ros_nuc (identical build) — see note there.
-    image: a2_ros:robot
-    build:
-      context: .
-      dockerfile: ./environment/Dockerfile.dev
-      target: robot
-      args:
-        UID: ${HOST_UID:-1000}
-        GID: ${HOST_GID:-1000}
-        INPUT_GID: ${INPUT_GID:-107}
-      cache_from:
-        - a2_ros:robot
-        - a2_ros:base
-        - a2_ros:builder
-      cache_to:
-        - type=inline
-    depends_on:
-      - zenoh_router_robot
-    shm_size: '512m'
-    # Intentionally left out until we start testing on the robot
-    # devices:
-    #   - /dev/input/js0:/dev/input/js0
-    volumes:
-      - *vol-x11
-      - *vol-xauth
-      - *vol-workspace
-      - *vol-bags
-      - type: volume
-        source: robot_bash_history
-        target: /home/ubuntu/.bash_history_dir
-      - type: volume
-        source: robot_colcon_build
-        target: /a2_ros_ws/build
-      - type: volume
-        source: robot_colcon_install
-        target: /a2_ros_ws/install
-      - type: volume
-        source: robot_colcon_log
-        target: /a2_ros_ws/log
-      - type: volume
-        source: robot_rosdep_cache
-        target: /home/ubuntu/.ros
-
-  # ---- Zenoh discovery routers --------------------------------------------
+  # ---- Zenoh discovery router ---------------------------------------------
   # The Zenoh router (rmw_zenohd) is a per-machine discovery singleton. Start
-  # the one matching your workflow before launching nodes, e.g.:
+  # it before launching any sim nodes:
   #   docker compose up -d zenoh_router_sim
   # It listens on tcp/0.0.0.0:7447 over the host network. Point client nodes at
-  # it with ZENOH_ROUTER_IP_SIM / ZENOH_ROUTER_IP_ROBOT in your .env (these are
-  # consumed by scripts/setup_zenoh.sh; default is localhost).
+  # it with ZENOH_ROUTER_IP_SIM in your .env (default is localhost).
   # NOTE: run only ONE router per host — they share TCP port 7447.
+  # Robot services (NUC, pc2) are in compose.nuc.yaml and compose.pc2.yaml.
   zenoh_router_sim:
-    <<: *common
-    build:
-      context: .
-      dockerfile: ./environment/Dockerfile.dev
-      target: a2_base
-    restart: unless-stopped
-    command: [ "ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd" ]
-
-  zenoh_router_robot:
     <<: *common
     build:
       context: .
@@ -336,13 +277,11 @@ volumes:
   dev_colcon_install:
   dev_colcon_log:
   dev_rosdep_cache:
-  # Shared by a2_ros_nuc and a2_ros_pc2. Each runs on its own host (separate
-  # Docker daemon), so the same volume names stay independent per machine.
-  robot_bash_history:
-  robot_colcon_build:
-  robot_colcon_install:
-  robot_colcon_log:
-  robot_rosdep_cache:
+  nuc_bash_history:
+  nuc_colcon_build:
+  nuc_colcon_install:
+  nuc_colcon_log:
+  nuc_rosdep_cache:
   # Shares the KasmVNC X socket (/tmp/.X11-unix) between the vnc server and
   # a2_ros_dev (see compose.vnc.yml) so GUI apps in dev can render to display :20.
   x11:

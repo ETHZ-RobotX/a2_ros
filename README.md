@@ -8,16 +8,7 @@ ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained R
 > - [ ] `pathFollower` / `localPlanner` autonomy mode is overridden to `false` by the joystick node on every `/joy` message (axes[4] < 0.1 at rest). The `autonomyMode: True` launch parameter has no effect while a controller is connected. Either kill `joy_node` before running nav (`ros2 node kill /joy_node`), push the right stick forward to hold axes[4] > 0.1, or patch pathFollower/localPlanner to only respect the joystick override when `joySpeedRaw > 0`.
 > - [ ] Move `registered_scan` publisher out of `a2_sim_utils` into a standalone `a2_utils` node so it can be used with real hardware and DLIO without a sim dependency (see DLIO integration notes below).
 
-- [x] Provide base docker setup for development
-- [x] Move dependency installations from install scripts to docker **Until this time, try not to recreate containers to save time**
-- [x] Decide whether install script should manage git submodules too (and thus lie inside the docker runtime)
-- [x] Remove interactive components of install script
-- [x] Ship `a2_ros` source code with built image
-- [x] Setup docker managed volumes for build artifacts (also requires deciding how to organize these)
-- [ ] Setup docker managed volumes for data artifacts (rosbags, pytorch models etc.)(also requires deciding how to organize these)
 - [ ] Remove all source code from meta-package `a2_ros` and only maintain dependencies
-- [x] Add source folders for each subsystem `core/ sim/` etc.
-- [x] Install other third party drivers related to lidars and other peripherals.
 
 ## Setup with Docker
 
@@ -100,78 +91,66 @@ docker compose down                  # stop and remove containers
 docker compose down -v               # also remove volumes (wipes build cache)
 ```
 
-## Launching Subsystems
-Launch the simulation:
-## Local development with a2.sh
+## Meta Packages
 
-`a2.sh` is the main entry point for local (non-Docker) development. It deactivates any active conda environment before sourcing ROS so builds and launches are not affected by conda Python.
+The `src/meta_packages/` directory contains stack-level packages. Each one declares `exec_depend` entries for a particular deployment scenario — build it with `colcon build --packages-up-to <name>` to pull in all required dependencies. All launch files and config live in `a2_ros` and are launched from there, except `a2_pc2` which runs on a separate compute unit and owns its own launch files.
 
-### One-time shell setup
-
-Register the `a2` convenience function in your shell (run once):
-
-```bash
-source ./a2.sh --bashrc
-```
-
-This appends an `a2()` function to `~/.bashrc` so you can call `a2 <command>` from any directory. The `--source` sub-command is handled inline (via `source`) so it takes effect in the current shell; all other commands are forwarded to `a2.sh`.
-
-### Commands
-
-| Command | Description |
-|---|---|
-| `a2 --start` | Launch the MuJoCo simulation (`scene_maze.xml`) |
-| `a2 --walk` | Command the robot to walk (publishes `mode=3` on `/mode`) |
-| `a2 --nav` | Launch the navigation stack |
-| `a2 --exploration` | Launch autonomous exploration (TARE) |
-| `a2 --dlio` | Launch DLIO LiDAR-inertial odometry |
-| `a2 --source` | Source the workspace setup in the current shell |
-| `a2 --bashrc` | Add the `a2` function to `~/.bashrc` (idempotent) |
-| `a2 --init` | Open a 4-pane terminator window with commands pre-filled |
-
-Append `--rviz` to any launch command to open RViz alongside it, e.g.:
-
-```bash
-a2 --start --rviz
-a2 --nav --rviz
-```
-
-### Quick start with `--init`
-
-The fastest way to get going. Requires `terminator` (`sudo apt install terminator`) and `--bashrc` to have been run first:
-
-```bash
-a2 --init
-```
-
-This opens a single terminator window split into 4 panes, each with a command pre-filled and ready to run (press Enter or edit as needed):
-
-| Pane | Command | Background |
+| Package | Pull in for | Key deps |
 |---|---|---|
-| Top-left | `a2 --start` | dark green |
-| Bottom-left | `a2 --walk` | dark blue |
-| Top-right | `a2 --nav` | dark red |
-| Bottom-right | `a2 --source` | dark amber |
+| `a2_sim` | Simulation | `a2_sim_utils`, `a2_locomotion_controller`, `unitree_mujoco` |
+| `a2_sim_full` | Full simulation with perception | `a2_sim` + `a2_state_estimation` + `a2_object_detection` |
+| `a2_state_estimation` | LiDAR-inertial odometry | `direct_lidar_inertial_odometry` |
+| `a2_object_detection` | Object detection | `object_detection`, `object_detection_msgs` |
+| `a2_robot` | Real robot | `a2_ros` + `a2_state_estimation` + `a2_object_detection` + `hesai_ros_driver` |
+| `a2_pc2` | Second compute unit | `a2_unitree_bridge`, `gscam2`, Unitree SDK — has its own launch files |
 
-### Typical workflow
+Hardware-conditional dependencies are handled at the stack level: `hesai_ros_driver` is an `exec_depend` of `a2_robot` only, so the LiDAR driver is not required when building for simulation.
+
+**Typical workflow:** build the meta package for your target, then use `a2` commands:
+```bash
+colcon build --packages-up-to a2_robot   # real robot
+# or
+colcon build --packages-up-to a2_sim_full  # simulation with perception
+```
+
+## Launching Subsystems
+
+All launch files live in `a2_ros`. Use the `a2` CLI to invoke them:
+
+| Command | Launch file | Description |
+|---|---|---|
+| `a2 start [--rviz] [--dlio]` | `sim.launch.py` | MuJoCo simulation + locomotion controller |
+| `a2 nav [--rviz]` | `navigation.launch.py` | CMU navigation stack (terrain analysis + path planner) |
+| `a2 explore [--rviz]` | `exploration.launch.py` | Autonomous exploration (TARE planner) |
+| `a2 dlio [--rviz]` | `dlio.launch.py` | DLIO LiDAR-inertial odometry |
+| — | `real.launch.py` | Real robot — locomotion executor + bridge (NUC) |
+| — | `teleop_joy.launch.py` | Joystick teleop |
+
+For `a2_pc2` (run directly on the second compute unit):
+```bash
+ros2 launch a2_pc2 pc2.launch.py
+ros2 launch a2_pc2 camera.launch.py
+```
+
+### Typical simulation workflow
 
 **Terminal 1 — simulation:**
 ```bash
-a2 --start
+a2 start
 ```
 
 **Terminal 2 — walk:**
 ```bash
-a2 --walk
+a2 walk
 ```
 
 **Terminal 3 — navigation / exploration / odometry:**
 ```bash
-a2 --nav --rviz
+a2 nav --rviz
 # or
-a2 --exploration --rviz
+a2 explore --rviz
 # or
-a2 --dlio --rviz
+a2 dlio --rviz
 ```
 
 Set a 2D Nav Goal in RViz to send the robot to a target pose.
