@@ -21,7 +21,7 @@ if [ -f "$_WS_ROOT/install/setup.bash" ]; then
     echo "[a2_ros] Sourced workspace: $_WS_ROOT"
 else
     echo "[a2_ros] WARNING: Workspace not built yet."
-    echo "  Run:  cd $WORKSPACE_DIR && colcon build --symlink-install"
+    echo "  Run:  ./scripts/build_workspace.sh"
 fi
 
 # --- MuJoCo (sim only) ---
