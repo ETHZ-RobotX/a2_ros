@@ -18,7 +18,6 @@
   <!-- Core -->
   <exec_depend>a2_sim</exec_depend>
   <exec_depend>a2_state_estimation</exec_depend>
-  <exec_depend>a2_exploration</exec_depend>
   <exec_depend>a2_object_detection</exec_depend>
 
   <export>

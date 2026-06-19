@@ -16,7 +16,6 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <!-- Core -->
-  <exec_depend>a2_ros</exec_depend>
   <exec_depend>a2_interfaces</exec_depend>
   <exec_depend>a2_utils</exec_depend>
   <exec_depend>a2_description</exec_depend>
