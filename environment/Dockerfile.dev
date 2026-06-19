@@ -68,6 +68,19 @@ RUN mkdir -p /opt/onnxruntime && \
     ln -sf "libonnxruntime.so.${ONNXRUNTIME_VERSION}" \
            "/opt/onnxruntime/lib/libonnxruntime.so.1"
 
+# Separated Builder image for python venv to speed up installation
+FROM ${ROS_IMAGE} AS builder_pyenv
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    wget \
+    python3-pip \
+    python3.12-venv
+
 # Python virtual environments
 # Copy all requirements txt file in the high level one.
 COPY requirements.txt .
@@ -173,7 +186,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN python3 -m pip install --break-system-packages "empy==3.3.4"
 
 # Python venv from builder — added to PATH so it's always active
-COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder_pyenv /opt/venv /opt/venv
 
 # MCAP CLI from builder
 COPY --from=builder /usr/local/bin/mcap /usr/local/bin/mcap

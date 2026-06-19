@@ -4,9 +4,6 @@ on:
   # Push to main branch publishes the image to the registry
   push:
     branches: [ 'main' ]
-  # Pull Request to main branch verifies image builds successfully
-  pull_request:
-    branches: [ 'main' ]
 
 env:
   REGISTRY: ghcr.io
@@ -32,6 +29,17 @@ jobs:
           submodules: recursive
           token: ${{ secrets.SUBMODULE_PAT }}
 
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false   # keep actions tool cache (used by other steps)
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
       # https://github.com/docker/setup-buildx-action
@@ -54,36 +62,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── builder stage ────────────────────────────────────────────────────────
-      # Builds non-ROS dependencies (Unitree SDK, MuJoCo, ONNX Runtime, Python
-      # venv) that change rarely and are expensive to compile.
-
-      - name: Extract Docker metadata (builder)
-        id: meta-builder
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}/builder
-
-      - name: Build and push builder stage
-        id: push-builder
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
-        with:
-          context: .
-          file: ./environment/Dockerfile.dev
-          target: builder
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-builder.outputs.tags }}
-          labels: ${{ steps.meta-builder.outputs.labels }}
-          cache-from: |
-            type=gha,scope=builder
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}/builder:buildcache
-          cache-to: |
-            type=gha,scope=builder,mode=max
-            ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}/{1}/builder:buildcache,mode=max', env.REGISTRY, env.IMAGE_NAME_LC) || '' }}
-
-      # ── a2_base stage ────────────────────────────────────────────────────────
+      # ── a2_base stage (builds first — builder is an internal dependency) ────────
       # Installs all apt packages (ROS, perception, dev tools) and the Python
-      # venv on top of the upstream ROS image. Changes when deps are added.
+      # venv on top of the upstream ROS image. Building this stage also builds
+      # the builder stage internally (COPY --from=builder), so builder layers are
+      # fully cached in GHA after this step at no extra disk cost.
 
       - name: Extract Docker metadata (a2_base)
         id: meta-a2-base
@@ -101,12 +84,6 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-a2-base.outputs.tags }}
           labels: ${{ steps.meta-a2-base.outputs.labels }}
-          cache-from: |
-            type=gha,scope=a2_base
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}/a2_base:buildcache
-          cache-to: |
-            type=gha,scope=a2_base,mode=max
-            ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}/{1}/a2_base:buildcache,mode=max', env.REGISTRY, env.IMAGE_NAME_LC) || '' }}
 
       # TODO: Attestation feature not available to private repositories.
       # Consider doing this once repo is public.
