@@ -152,6 +152,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ros-${ROS_DISTRO}-camera-calibration-parsers \
     ros-${ROS_DISTRO}-camera-info-manager \
     ros-${ROS_DISTRO}-image-transport \
+    ros-${ROS_DISTRO}-compressed-image-transport \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
     libgstreamer-plugins-good1.0-dev \

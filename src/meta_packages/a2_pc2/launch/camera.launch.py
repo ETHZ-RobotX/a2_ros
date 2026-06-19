@@ -3,6 +3,12 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
+# Resize resolution — match your detection model's input to minimise bandwidth.
+# At 640×640, JPEG q=60 is ~5–8 Mbps at 20 Hz (vs ~200+ Mbps raw).
+_WIDTH = 640
+_HEIGHT = 640
+_JPEG_QUALITY = 60  # 50–70 works well for YOLO; lower = smaller frames
+
 
 def generate_launch_description():
 
@@ -12,7 +18,9 @@ def generate_launch_description():
         "! application/x-rtp, media=video, encoding-name=H264 "
         "! rtph264depay ! h264parse ! avdec_h264 "
         "! videoconvert "
-        "! video/x-raw,format=RGB"
+        f"! videoscale ! video/x-raw,format=I420,width={_WIDTH},height={_HEIGHT} "
+        f"! jpegenc quality={_JPEG_QUALITY} "
+        "! image/jpeg"
     )
 
     return LaunchDescription([
@@ -24,8 +32,8 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'image_encoding',
-            default_value='rgb8',
-            description='Image encoding passed to gscam2',
+            default_value='jpeg',
+            description='Image encoding passed to gscam2 — jpeg publishes CompressedImage on image_raw/compressed',
         ),
         DeclareLaunchArgument(
             'gscam_config',
@@ -39,12 +47,12 @@ def generate_launch_description():
             name='gscam2',
             output='screen',
             parameters=[{
-                'gscam_config':    LaunchConfiguration('gscam_config'),
-                'camera_name':     LaunchConfiguration('camera_name'),
-                'image_encoding':  LaunchConfiguration('image_encoding'),
+                'gscam_config':   LaunchConfiguration('gscam_config'),
+                'camera_name':    LaunchConfiguration('camera_name'),
+                'image_encoding': LaunchConfiguration('image_encoding'),
             }],
             remappings=[
-                ('image_raw', 'camera/image_raw'),
+                ('image_raw/compressed', 'camera/image_raw/compressed'),
             ],
         ),
 
