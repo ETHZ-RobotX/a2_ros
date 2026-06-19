@@ -12,3 +12,5 @@ build:
     - hesai_ros_driver
     - unitree_ros2_example
     - gscam2
+    - a2_pc2
+    - a2_robot
