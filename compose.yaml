@@ -1,3 +1,5 @@
+name: ${USER}_a2_ros
+
 x-common: &common
   init: true
   network_mode: host

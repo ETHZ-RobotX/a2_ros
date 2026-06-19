@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>a2_nav</name>
+  <version>0.0.0</version>
+  <description>
+    Meta-package for the A2 Navigation. Depends on every package
+    needed to run the Navigation Launch File
+
+    Build only this group:
+      colcon build --packages-up-to a2_sim
+  </description>
+  <maintainer email="per.a.frivik@gmail.com">perfrivik</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Core -->
+  <exec_depend>a2_ros</exec_depend>
+  <exec_depend>a2_interfaces</exec_depend>
+  <exec_depend>a2_utils</exec_depend>
+  <exec_depend>a2_description</exec_depend>
+  <exec_depend>a2_deployment_config</exec_depend>
+  <exec_depend>a2_unitree_bridge</exec_depend>
+
+  <!-- Navigation-specific -->
+  <exec_depend>terrain_analysis</exec_depend>
+  <exec_depend>terrain_analysis_ext</exec_depend>
+  <exec_depend>local_planner</exec_depend>
+  <exec_depend>far_planner</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
