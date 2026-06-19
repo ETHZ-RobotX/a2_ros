@@ -10,6 +10,7 @@ build:
     - "/a2_ros"
   packages-ignore:
     - unitree_mujoco
+    - a2_sim
     - a2_sim_utils
     - unitree_ros2_example
     - a2_locomotion_controller
