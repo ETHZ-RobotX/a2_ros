@@ -3,6 +3,6 @@
   "dockerComposeFile": "../compose.yaml",
   "service": "a2_ros_dev",
   "workspaceFolder": "/a2_ros",
-  "remoteUser": "root",
+  "remoteUser": "ubuntu",
   "postCreateCommand": "bash -c 'source setup.sh'"
 }

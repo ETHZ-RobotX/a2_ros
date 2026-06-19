@@ -169,3 +169,7 @@ source "$OSH"/oh-my-bash.sh
 # alias bashconfig="mate ~/.bashrc"
 # alias ohmybash="mate ~/.oh-my-bash"
 
+# a2 shell integration — sourced from the workspace volume so it hot-reloads
+# without requiring an image rebuild.
+[ -f /a2_ros/scripts/a2_shell.sh ] && source /a2_ros/scripts/a2_shell.sh
+

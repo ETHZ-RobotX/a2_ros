@@ -3,8 +3,12 @@ ARG ROS_DISTRO=jazzy
 ARG MUJOCO_VERSION=3.5.0
 ARG USER=ubuntu
 
+# Pinned digest — update by running:
+#   docker pull ros:jazzy && docker inspect ros:jazzy --format '{{index .RepoDigests 0}}'
+ARG ROS_IMAGE=ros@sha256:eac11a5285beeb1e1884e71f7091c610e08452e823bfb3f43afaa334375325f6
+
 # Builder image for non-ros dependencies to reduce source code footprint
-FROM ros:$ROS_DISTRO AS builder
+FROM ${ROS_IMAGE} AS builder
 ARG MUJOCO_VERSION
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -32,6 +36,11 @@ RUN mkdir -p /opt/mujoco && \
     tar -xzf /tmp/mujoco.tar.gz -C /opt/mujoco/ && \
     rm /tmp/mujoco.tar.gz
 
+# MCAP CLI — for offline bag inspection without a running ROS stack
+# Pin to a specific release: https://github.com/foxglove/mcap/releases
+RUN wget -q "https://github.com/foxglove/mcap/releases/latest/download/mcap-linux-amd64" \
+    -O /usr/local/bin/mcap && chmod +x /usr/local/bin/mcap
+
 # Python virtual environments
 # Copy all requirements txt file in the high level one.
 COPY requirements.txt .
@@ -47,9 +56,10 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # Installs all apt packages and the python venv. Runs as root.                 #
 # No user creation here — keeps this layer stable and user-agnostic.           #
 ################################################################################
-FROM ros:${ROS_DISTRO} AS a2_base
+FROM ${ROS_IMAGE} AS a2_base
 ARG ROS_DISTRO
 
+# System & build tools — changes rarely
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y \
@@ -61,49 +71,82 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     python3-argcomplete \
     python3-pip \
     python3.12-venv \
-    qtdeclarative5-dev \
-    libopencv-dev \
-    libpcap-dev \
+    openssh-client \
     libx11-dev \
+    xorg-dev \
+    qtdeclarative5-dev \
     libyaml-cpp-dev \
     libspdlog-dev \
     libboost-all-dev \
     libfmt-dev \
     libglfw3-dev \
-    xorg-dev \
-    openssh-client \
+    libpcap-dev \
+    libopencv-dev
+
+# ROS core — middleware, control, robot description
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
     ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
     ros-${ROS_DISTRO}-rmw-zenoh-cpp \
     ros-${ROS_DISTRO}-urdf \
     ros-${ROS_DISTRO}-xacro \
-    ros-${ROS_DISTRO}-rviz2 \
+    ros-${ROS_DISTRO}-urdfdom-py \
+    ros-${ROS_DISTRO}-robot-state-publisher \
+    ros-${ROS_DISTRO}-joy \
     ros-${ROS_DISTRO}-ros2-control \
     ros-${ROS_DISTRO}-ros2-controllers \
     ros-${ROS_DISTRO}-controller-manager \
-    ros-${ROS_DISTRO}-urdfdom-py \
-    ros-${ROS_DISTRO}-joy \
-    ros-${ROS_DISTRO}-robot-state-publisher \
+    ros-${ROS_DISTRO}-twist-mux
+
+# Perception — pointcloud, vision, camera, gstreamer
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
     ros-${ROS_DISTRO}-pcl-conversions \
     ros-${ROS_DISTRO}-pcl-ros \
     ros-${ROS_DISTRO}-cv-bridge \
     ros-${ROS_DISTRO}-vision-opencv \
+    ros-${ROS_DISTRO}-camera-calibration-parsers \
+    ros-${ROS_DISTRO}-camera-info-manager \
+    ros-${ROS_DISTRO}-image-transport \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
+    libgstreamer-plugins-good1.0-dev \
     gstreamer1.0-plugins-base \
     gstreamer1.0-plugins-good \
     gstreamer1.0-plugins-bad \
     gstreamer1.0-plugins-ugly \
     gstreamer1.0-libav \
-    gstreamer1.0-tools \
-    ros-${ROS_DISTRO}-camera-calibration-parsers \
-    ros-${ROS_DISTRO}-camera-info-manager \
-    ros-${ROS_DISTRO}-image-transport
+    gstreamer1.0-tools
+
+# Visualization & analysis — most likely to grow
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    ros-${ROS_DISTRO}-rviz2 \
+    ros-${ROS_DISTRO}-plotjuggler-ros \
+    ros-${ROS_DISTRO}-foxglove-bridge \
+    ros-${ROS_DISTRO}-rqt \
+    ros-${ROS_DISTRO}-rqt-common-plugins \
+    ros-${ROS_DISTRO}-rqt-tf-tree
+
+# Developer tools — most likely to change
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    tmux \
+    btop \
+    gdb
 
 # empy required by colcon at build time (system Python, not venv)
 RUN python3 -m pip install --break-system-packages "empy==3.3.4"
 
 # Python venv from builder — added to PATH so it's always active
 COPY --from=builder /opt/venv /opt/venv
+
+# MCAP CLI from builder
+COPY --from=builder /usr/local/bin/mcap /usr/local/bin/mcap
 ENV PATH="/opt/venv/bin:$PATH"
 
 ################################################################################
@@ -136,7 +179,8 @@ RUN mkdir -p /home/$USER/.bash_history_dir /home/$USER/.ros && \
     chown -R $USER:$USER /home/$USER/.bash_history_dir /home/$USER/.ros /home/$USER/.sudo_as_admin_successful
 
 COPY environment/shell/.bashrc /home/$USER/.bashrc
-RUN chown $USER:$USER /home/$USER/.bashrc
+COPY environment/shell/.tmux.conf /home/$USER/.tmux.conf
+RUN chown $USER:$USER /home/$USER/.bashrc /home/$USER/.tmux.conf
 
 RUN git clone --depth=1 https://github.com/ohmybash/oh-my-bash.git /home/$USER/.oh-my-bash && \
     chown -R $USER:$USER /home/$USER/.oh-my-bash
@@ -159,6 +203,12 @@ USER $USER
 
 # Copy everything to cwd
 COPY --chown=$USER:$USER . .
+
+# Install the a2 CLI into PATH (symlink so volume-mounted dev sessions stay in sync)
+USER root
+RUN chmod +x /a2_ros/scripts/a2 && \
+    ln -sf /a2_ros/scripts/a2 /usr/local/bin/a2
+USER $USER
 
 ################################################################################
 # Development Stage. Builds simulation                                         #
@@ -199,25 +249,10 @@ ENV USER=${USER:-ubuntu}
 # Copy Unitree SDK from Builder
 COPY --from=builder /opt/unitree_robotics /opt/unitree_robotics
 
-USER root
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y \
-    libgstreamer1.0-dev \
-    libgstreamer-plugins-base1.0-dev \
-    libgstreamer-plugins-good1.0-dev \
-    gstreamer1.0-plugins-base \
-    gstreamer1.0-plugins-good \
-    gstreamer1.0-plugins-bad \
-    gstreamer1.0-libav \
-    gstreamer1.0-tools \
-    ros-${ROS_DISTRO}-camera-calibration-parsers \
-    ros-${ROS_DISTRO}-camera-info-manager
-USER $USER
-
 # Set default package manifest for robot
 ENV A2_MODE=robot
 ENV COLCON_DEFAULTS_FILE=/a2_ros/environment/colcon/robot.defaults.yaml
 
 # Source ROS environment
 RUN echo "source ${PWD}/scripts/setup.sh" >> /home/$USER/.bashrc
+

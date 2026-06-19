@@ -1,4 +1,5 @@
 x-common: &common
+  init: true
   network_mode: host
   # Share the host IPC namespace so containers use the host's large /dev/shm
   # instead of the 64 MB default. Required for Zenoh shared-memory transport
@@ -45,12 +46,34 @@ x-vol-bags: &vol-bags
   target: /a2_ros/bags
 
 services:
+  # Build-only service for the builder stage (Unitree SDK, MuJoCo, Python venv).
+  # Not a runnable container — only used to tag and cache this expensive stage.
+  # Build with: docker compose --profile build build a2_ros_builder
+  a2_ros_builder:
+    <<: *common
+    image: a2_ros:builder
+    profiles: [build]
+    build:
+      context: .
+      dockerfile: ./environment/Dockerfile.dev
+      target: builder
+      cache_from:
+        - a2_ros:builder
+      cache_to:
+        - type=inline
+
   a2_base:
     <<: *common
+    image: a2_ros:base
     build:
       context: .
       dockerfile: ./environment/Dockerfile.dev
       target: a2_base
+      cache_from:
+        - a2_ros:base
+        - a2_ros:builder
+      cache_to:
+        - type=inline
     volumes:
       - *vol-x11
       - *vol-xauth
@@ -59,6 +82,7 @@ services:
 
   a2_ros_dev:
     <<: *common
+    image: a2_ros:dev
     build:
       context: .
       dockerfile: ./environment/Dockerfile.dev
@@ -67,6 +91,12 @@ services:
         UID: ${HOST_UID:-1000}
         GID: ${HOST_GID:-1000}
         INPUT_GID: ${INPUT_GID:-107}
+      cache_from:
+        - a2_ros:dev
+        - a2_ros:base
+        - a2_ros:builder
+      cache_to:
+        - type=inline
     depends_on:
       - zenoh_router_sim
     devices:
@@ -91,6 +121,7 @@ services:
 
   a2_ros_robot:
     <<: *common
+    image: a2_ros:robot
     build:
       context: .
       dockerfile: ./environment/Dockerfile.dev
@@ -99,6 +130,12 @@ services:
         UID: ${HOST_UID:-1000}
         GID: ${HOST_GID:-1000}
         INPUT_GID: ${INPUT_GID:-107}
+      cache_from:
+        - a2_ros:robot
+        - a2_ros:base
+        - a2_ros:builder
+      cache_to:
+        - type=inline
     depends_on:
       - zenoh_router_robot
     shm_size: '512m'

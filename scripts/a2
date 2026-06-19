@@ -1,0 +1,185 @@
+#!/bin/bash
+set -e
+
+# Locate workspace: prefer env var, fall back to parent of this script's directory.
+SCRIPT_DIR="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd)"
+WORKSPACE_DIR="${WORKSPACE_DIR:-$(dirname "$SCRIPT_DIR")}"
+
+# shellcheck source=common.sh
+source "$WORKSPACE_DIR/scripts/common.sh"
+
+
+_usage() {
+    cat <<EOF
+Usage: a2 <command> [options]
+
+Workspace:
+  source             Source the ROS/workspace environment (same as running a2)
+  build [package]    Build the workspace, or up to a specific package
+  clean [--yes]      Remove build/install/log artifacts (--yes skips confirmation)
+  env                Print key environment variables
+  log                Tail the latest colcon build log
+
+Robot:
+  start [--rviz] [--dlio]  Launch MuJoCo simulation
+  walk               Command robot to walk   (mode=4)
+  unlock             Command robot to unlock (mode=3)
+  stand              Command robot to stand  (mode=2)
+  sit                Command robot to sit    (mode=1)
+  nav   [--rviz]     Launch navigation stack
+  explore [--rviz]   Launch autonomous exploration (TARE)
+  dlio  [--rviz]     Launch DLIO LiDAR-inertial odometry
+
+Introspection:
+  topics             List active ROS topics
+  nodes              List active ROS nodes
+
+Data:
+  bag record [-a] [-t topics] [-i ignore] [-c config.yaml] [suffix]
+  bag play   <file>        Play back a rosbag
+
+Utilities:
+  plotjuggler        Launch PlotJuggler
+  foxglove           Launch Foxglove Bridge (default port 8765)
+  router             Start Zenoh router (foreground)
+  verify             Verify MuJoCo installation
+  patch              Patch Unitree packages for ROS 2 Jazzy
+
+Mode:      ${A2_MODE:-unknown}
+Workspace: $WORKSPACE_DIR
+EOF
+}
+
+# Separate flags from positional args
+RVIZ=false
+DLIO=false
+YES=false
+ARGS=()
+for arg in "$@"; do
+    case "$arg" in
+        --rviz) RVIZ=true ;;
+        --dlio) DLIO=true ;;
+        --yes)  YES=true ;;
+        *)      ARGS+=("$arg") ;;
+    esac
+done
+
+CMD="${ARGS[0]:-}"
+
+case "$CMD" in
+    source)
+        # Sourcing must happen in the calling shell, not a subprocess.
+        # This is handled by the a2() function in .bashrc — if you see this
+        # message, you called the binary directly instead of via the function.
+        error "Cannot source from a subprocess. Use the shell function:"
+        error "  Add 'a2() { ... }' to your shell (see environment/shell/.bashrc)"
+        exit 1
+        ;;
+    build)
+        (cd "$WORKSPACE_DIR" && bash scripts/build_workspace.sh "${ARGS[1]:-}")
+        ;;
+    clean)
+        if $YES; then
+            echo y | (cd "$WORKSPACE_DIR" && bash scripts/clean_workspace.sh)
+        else
+            (cd "$WORKSPACE_DIR" && bash scripts/clean_workspace.sh)
+        fi
+        ;;
+    env)
+        info "A2_MODE              = ${A2_MODE:-<unset>}"
+        info "RMW_IMPLEMENTATION   = ${RMW_IMPLEMENTATION:-<unset>}"
+        info "ROS_DOMAIN_ID        = ${ROS_DOMAIN_ID:-<unset>}"
+        info "ZENOH_ROUTER_IP      = ${ZENOH_ROUTER_IP:-<unset>}"
+        info "ZENOH_ROUTER_IP_SIM  = ${ZENOH_ROUTER_IP_SIM:-<unset>}"
+        info "ZENOH_ROUTER_IP_ROBOT= ${ZENOH_ROUTER_IP_ROBOT:-<unset>}"
+        info "MUJOCO_DIR           = ${MUJOCO_DIR:-<unset>}"
+        info "ROS_BAGS_DIR         = ${ROS_BAGS_DIR:-<unset>}"
+        info "WORKSPACE_DIR        = $WORKSPACE_DIR"
+        ;;
+    log)
+        LOG_DIR="$WORKSPACE_DIR/log"
+        LATEST=$(find "$LOG_DIR" -name "*.log" 2>/dev/null | sort -t/ -k1 | tail -1)
+        if [[ -z "$LATEST" ]]; then
+            error "No build logs found in $LOG_DIR"
+            exit 1
+        fi
+        info "Tailing: $LATEST"
+        tail -f "$LATEST"
+        ;;
+    start)
+        ros2 launch a2_ros sim.launch.py rviz:=$RVIZ dlio:=$DLIO
+        ;;
+    walk)
+        ros2 topic pub --once /a2/mode a2_interfaces/msg/OperatingMode "mode: 4"
+        ;;
+    unlock)
+        ros2 topic pub --once /a2/mode a2_interfaces/msg/OperatingMode "mode: 3"
+        ;;
+    stand)
+        ros2 topic pub --once /a2/mode a2_interfaces/msg/OperatingMode "mode: 2"
+        ;;
+    sit)
+        ros2 topic pub --once /a2/mode a2_interfaces/msg/OperatingMode "mode: 1"
+        ;;
+    nav)
+        ros2 launch a2_ros navigation.launch.py rviz:=$RVIZ
+        ;;
+    explore)
+        ros2 launch a2_ros exploration.launch.py rviz:=$RVIZ
+        ;;
+    dlio)
+        ros2 launch a2_ros dlio.launch.py rviz:=$RVIZ
+        ;;
+    topics)
+        ros2 topic list
+        ;;
+    nodes)
+        ros2 node list
+        ;;
+    bag)
+        SUBCMD="${ARGS[1]:-}"
+        case "$SUBCMD" in
+            record)
+                # Pass all remaining args through to record.sh
+                bash "$WORKSPACE_DIR/scripts/record.sh" "${ARGS[@]:2}"
+                ;;
+            play)
+                FILE="${ARGS[2]:-}"
+                if [[ -z "$FILE" ]]; then
+                    error "Usage: a2 bag play <file>"
+                    exit 1
+                fi
+                ros2 bag play "$FILE"
+                ;;
+            *)
+                error "Usage: a2 bag record [OPTIONS] [SUFFIX] | a2 bag play <file>"
+                info  "  a2 bag record --help  for recording options"
+                exit 1
+                ;;
+        esac
+        ;;
+    plotjuggler)
+        ros2 run plotjuggler plotjuggler
+        ;;
+    foxglove)
+        ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8765
+        ;;
+    router)
+        bash "$WORKSPACE_DIR/scripts/start_zenoh_router.sh"
+        ;;
+    verify)
+        bash "$WORKSPACE_DIR/scripts/verify_mujoco.sh"
+        ;;
+    patch)
+        (cd "$WORKSPACE_DIR" && bash scripts/patch_unitree.sh)
+        ;;
+    "" | help)
+        _usage
+        ;;
+    *)
+        error "Unknown command: $CMD"
+        echo
+        _usage
+        exit 1
+        ;;
+esac
