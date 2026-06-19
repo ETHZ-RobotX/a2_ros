@@ -1,0 +1,23 @@
+[Unit]
+Description=PC2 Robot Launch Service
+# bluetooth.service needed for the BT watchdog in autospawn.sh
+After=network.target docker.service bluetooth.service
+Wants=docker.service bluetooth.service
+
+[Service]
+Type=simple
+User=robotx
+# autospawn.sh is symlinked here by scripts/pc2/install.sh
+ExecStart=/usr/local/bin/pc2_joylaunch.sh
+# On stop, systemd sends SIGTERM which triggers the cleanup trap in autospawn.sh
+# (stops the joy container). Give it time to finish before force-killing.
+KillMode=process
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pc2-launch
+
+[Install]
+WantedBy=multi-user.target

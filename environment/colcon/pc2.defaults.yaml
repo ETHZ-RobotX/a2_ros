@@ -8,5 +8,3 @@ build:
   install-base: /a2_ros/install
   base-paths:
     - "/a2_ros"
-  packages-select:
-    - a2_pc2

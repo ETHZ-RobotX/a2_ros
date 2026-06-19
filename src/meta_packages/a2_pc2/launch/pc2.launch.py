@@ -40,7 +40,7 @@ def generate_launch_description():
     # )
 
     teleop_node = Node(
-        package='a2_ros',
+        package='a2_pc2',
         executable='teleop_joy',
         output='screen',
         parameters=[{
