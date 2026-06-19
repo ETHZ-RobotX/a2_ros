@@ -37,7 +37,7 @@ public:
     this->declare_parameter("linear_y_limit",  0.10);
     this->declare_parameter("angular_z_limit", 0.10);
 
-    twist_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel", 10);
+    twist_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/joy_vel", 10);
     mode_pub_  = this->create_publisher<OM>("/a2/mode", 10);
 
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
@@ -64,15 +64,18 @@ private:
   {
     // --- velocity (only in VELOCITY_MOVE to avoid "incompatible op mode" warnings) ---
     if (current_mode_ == OM::VELOCITY_MOVE) {
-      auto twist = geometry_msgs::msg::TwistStamped();
-      twist.header.stamp    = this->now();
-      twist.twist.linear.x  = msg->axes[AXIS_LS_V] *
-                                this->get_parameter("linear_x_limit").as_double();
-      twist.twist.linear.y  = msg->axes[AXIS_LS_H] *
-                                this->get_parameter("linear_y_limit").as_double();
-      twist.twist.angular.z = msg->axes[AXIS_RS_H] *
-                                this->get_parameter("angular_z_limit").as_double();
-      twist_pub_->publish(twist);
+      float lx = msg->axes[AXIS_LS_V];
+      float ly = msg->axes[AXIS_LS_H];
+      float az = msg->axes[AXIS_RS_H];
+
+      if (std::abs(lx) >= 0.05f || std::abs(ly) >= 0.05f || std::abs(az) >= 0.05f) {
+        auto twist = geometry_msgs::msg::TwistStamped();
+        twist.header.stamp    = this->now();
+        twist.twist.linear.x  = lx * this->get_parameter("linear_x_limit").as_double();
+        twist.twist.linear.y  = ly * this->get_parameter("linear_y_limit").as_double();
+        twist.twist.angular.z = az * this->get_parameter("angular_z_limit").as_double();
+        twist_pub_->publish(twist);
+      }
     }
 
     // --- guard: enough axes/buttons ---
