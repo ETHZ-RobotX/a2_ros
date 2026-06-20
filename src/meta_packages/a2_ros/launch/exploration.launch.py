@@ -5,9 +5,8 @@ Starts the full exploration stack on top of the running sim:
   - terrain_analysis     : builds /terrain_map from /registered_scan + /state_estimation
   - terrain_analysis_ext : builds /terrain_map_ext (global terrain)
   - local_planner        : obstacle-aware path selection
-  - pathFollower         : converts waypoints to /cmd_vel
+  - pathFollower         : converts waypoints to velocity, remapped /nav_vel_cmd -> /cmd_vel (TwistStamped)
   - tare_planner         : autonomous coverage exploration (replaces far_planner)
-  - nav_vel_relay        : converts /nav_vel_cmd (TwistStamped) -> /cmd_vel (Twist)
 
 Prerequisites (provided by sim.launch.py + a2_bridge):
   /state_estimation  - ground-truth odometry (published by a2_bridge in a2_sim_utils)
@@ -125,6 +124,9 @@ def generate_launch_description():
             executable='pathFollower',
             name='pathFollower',
             output='screen',
+            remappings=[
+                ('/nav_vel_cmd', '/cmd_vel'),  # cmd_vel is TwistStamped; pathFollower emits it directly
+            ],
             parameters=[{
                 'twoWayDrive':     False,
                 'lookAheadDis':    0.4,
@@ -155,14 +157,6 @@ def generate_launch_description():
             name='tare_planner_node',
             output='screen',
             parameters=[tare_config],
-        ),
-
-        # ---- relay: /nav_vel_cmd (TwistStamped) -> /cmd_vel (Twist) ----
-        Node(
-            package='a2_ros',
-            executable='nav_vel_relay',
-            name='nav_vel_relay',
-            output='screen',
         ),
 
         # ---- RViz ----

@@ -4,7 +4,6 @@ name: ${USER}_a2_ros_pc2
 # pc2 hosts the Zenoh router for the entire robot network; every robot node
 # (including the NUC on .124) discovers through it. Bring up with:
 #   docker compose -f compose.pc2.yaml up -d
-
 x-common: &common
   init: true
   network_mode: host
@@ -48,16 +47,7 @@ services:
   # network. Run only ONE router per host.
   zenoh_router_robot:
     <<: *common
-    image: a2_ros:base
-    build:
-      context: .
-      dockerfile: ./environment/Dockerfile.dev
-      target: a2_base
-      cache_from:
-        - a2_ros:base
-        - a2_ros:builder
-      cache_to:
-        - type=inline
+    image: ghcr.io/ethz-robotx/a2_ros/a2_base:main
     restart: unless-stopped
     command: [ "ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd" ]
 
@@ -76,8 +66,6 @@ services:
         INPUT_GID: ${INPUT_GID:-107}
       cache_from:
         - a2_ros:robot
-        - a2_ros:base
-        - a2_ros:builder
       cache_to:
         - type=inline
     depends_on:
@@ -119,8 +107,6 @@ services:
         INPUT_GID: ${INPUT_GID:-107}
       cache_from:
         - a2_ros:robot
-        - a2_ros:base
-        - a2_ros:builder
       cache_to:
         - type=inline
     depends_on:

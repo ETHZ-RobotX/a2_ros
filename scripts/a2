@@ -57,6 +57,7 @@ Robot:
   nav   [--rviz]     Launch navigation stack
   explore [--rviz]   Launch autonomous exploration (TARE)
   dlio  [--rviz]     Launch DLIO LiDAR-inertial odometry
+  detect             Launch object detection (YOLO, CPU); _real launch on robot
 
 Introspection:
   topics             List active ROS topics
@@ -175,6 +176,14 @@ case "$CMD" in
         ;;
     dlio)
         ros2 launch a2_ros dlio.launch.py rviz:=$RVIZ
+        ;;
+    detect)
+        # Object detection (YOLO, runs on CPU). Use the real-robot launch on hardware.
+        if [ "$A2_MODE" = "robot" ]; then
+            ros2 launch object_detection object_detection_real.launch.py
+        else
+            ros2 launch object_detection object_detection.launch.py
+        fi
         ;;
     topics)
         ros2 topic list

@@ -7,15 +7,6 @@ x-common: &common
   # instead of the 64 MB default. Required for Zenoh shared-memory transport
   # (many sim nodes pushing point clouds/images would otherwise hit OS error 12).
   ipc: host
-  privileged: false
-  # Allow the Zenoh SHM watchdog threads to set real-time scheduling priority
-  # (otherwise they warn "error setting scheduling priority OS(1)") and lock
-  # the SHM pools into memory.
-  ulimits:
-    rtprio: 99
-    nice: -20
-    memlock: -1
-  # gpus: all
   environment:
     # Linux: inherits the host's DISPLAY (e.g. :0) for native X11 forwarding
     # through the bind-mounted /tmp/.X11-unix. macOS/Windows: the host has no X
@@ -54,39 +45,6 @@ x-vol-bags: &vol-bags
   target: /a2_ros_ws/bags
 
 services:
-  # Build-only service for the builder stage (Unitree SDK, MuJoCo, Python venv).
-  # Not a runnable container — only used to tag and cache this expensive stage.
-  # Build with: docker compose --profile build build a2_ros_builder
-  a2_ros_builder:
-    <<: *common
-    image: a2_ros:builder
-    profiles: [build]
-    build:
-      context: .
-      dockerfile: ./environment/Dockerfile.dev
-      target: builder
-      cache_from:
-        - a2_ros:builder
-      cache_to:
-        - type=inline
-
-  a2_base:
-    <<: *common
-    image: a2_ros:base
-    build:
-      context: .
-      dockerfile: ./environment/Dockerfile.dev
-      target: a2_base
-      cache_from:
-        - a2_ros:base
-        - a2_ros:builder
-      cache_to:
-        - type=inline
-    volumes:
-      - *vol-x11
-      - *vol-xauth
-      - *vol-workspace
-      - *vol-bags
 
   a2_ros_dev:
     <<: *common
@@ -101,14 +59,22 @@ services:
         INPUT_GID: ${INPUT_GID:-107}
       cache_from:
         - a2_ros:dev
-        - a2_ros:base
-        - a2_ros:builder
       cache_to:
         - type=inline
     depends_on:
       - zenoh_router_sim
-    devices:
-      - /dev/input/js0:/dev/input/js0
+    # Privileged so the container gets host device access (e.g. the joystick at
+    # /dev/input) without bind-mounting Linux-only paths. This keeps startup
+    # working on macOS (no /dev/input there) and on Linux whether or not a
+    # controller is plugged in. Overrides the non-privileged x-common default.
+    privileged: true
+    # Allow the Zenoh SHM watchdog threads to set real-time scheduling priority
+    # (otherwise they warn "error setting scheduling priority OS(1)") and lock
+    # the SHM pools into memory.
+    ulimits:
+      rtprio: 99
+      nice: -20
+      memlock: -1
     volumes:
       - *vol-x11
       - *vol-xauth
@@ -135,8 +101,6 @@ services:
   # via the a2_ros_pc2 service on pc2 instead.
   a2_ros_nuc:
     <<: *common
-    # Shared image: a2_ros_nuc and a2_ros_pc2 have identical builds, so they tag
-    # the same image and Compose builds it only once.
     image: a2_ros:robot
     build:
       context: .
@@ -148,8 +112,6 @@ services:
         INPUT_GID: ${INPUT_GID:-107}
       cache_from:
         - a2_ros:robot
-        - a2_ros:base
-        - a2_ros:builder
       cache_to:
         - type=inline
     shm_size: '512m'
@@ -184,43 +146,9 @@ services:
   # Robot services (NUC, pc2) are in compose.nuc.yaml and compose.pc2.yaml.
   zenoh_router_sim:
     <<: *common
-    build:
-      context: .
-      dockerfile: ./environment/Dockerfile.dev
-      target: a2_base
+    image: ghcr.io/ethz-robotx/a2_ros/a2_base:main
     restart: unless-stopped
     command: [ "ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd" ]
-
-  # ---- Foxglove bridge (opt-in) -------------------------------------------
-  # Exposes ROS topics to Foxglove Studio over a WebSocket at ws://localhost:8765.
-  # Start it explicitly:  docker compose --profile foxglove up -d foxglove
-  # Profile-gated so it never auto-starts for Linux/native-RViz users or robot
-  # deploys. The command sources scripts/setup.sh so the bridge joins the sim
-  # Zenoh graph (matching ROS_DOMAIN_ID / middleware config) and can resolve
-  # package:// meshes from the built workspace overlay (dev_colcon_install).
-  # Reachable from the host only with Docker Desktop "host networking" enabled.
-  foxglove:
-    <<: *common
-    profiles: [ foxglove ]
-    build:
-      context: .
-      dockerfile: ./environment/Dockerfile.dev
-      target: dev
-      args:
-        UID: ${HOST_UID:-1000}
-        GID: ${HOST_GID:-1000}
-    depends_on:
-      - zenoh_router_sim
-    restart: unless-stopped
-    command:
-      - bash
-      - -c
-      - "source /a2_ros/scripts/setup.sh && exec ros2 launch foxglove_bridge foxglove_bridge_launch.xml"
-    volumes:
-      - *vol-workspace
-      - type: volume
-        source: dev_colcon_install
-        target: /a2_ros_ws/install
 
   # ---- KasmVNC desktop (opt-in) -------------------------------------------
   # Starts a KasmVNC X server + XFCE desktop on display :20, served at
@@ -238,6 +166,7 @@ services:
   vnc:
     <<: *common
     profiles: [ vnc ]
+    image: a2_ros:vnc
     build:
       context: .
       dockerfile: ./environment/Dockerfile.dev
