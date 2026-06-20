@@ -21,7 +21,7 @@ if [ -f "$_WS_ROOT/install/setup.bash" ]; then
     echo "[a2_ros] Sourced workspace: $_WS_ROOT"
 else
     echo "[a2_ros] WARNING: Workspace not built yet."
-    echo "  Run:  ./scripts/build_workspace.sh"
+    echo "  Run:  a2 build            (or: a2 build <package> to scope it)"
 fi
 
 # --- MuJoCo (sim only) ---

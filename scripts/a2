@@ -72,7 +72,6 @@ Utilities:
   foxglove           Launch Foxglove Bridge (default port 8765)
   router             Start Zenoh router (foreground)
   verify             Verify MuJoCo installation
-  patch              Patch Unitree packages for ROS 2 Jazzy
 
 Mode:      ${A2_MODE:-unknown}
 Workspace: $WORKSPACE_DIR
@@ -228,9 +227,6 @@ case "$CMD" in
         ;;
     verify)
         bash "$WORKSPACE_DIR/scripts/verify_mujoco.sh"
-        ;;
-    patch)
-        (cd "$WORKSPACE_DIR" && bash scripts/patch_unitree.sh)
         ;;
     "" | help)
         _usage
