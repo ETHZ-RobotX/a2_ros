@@ -284,7 +284,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /mujoco/front_lidar
+        Value: /front_lidar/points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -317,7 +317,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /mujoco/rear_lidar
+        Value: /rear_lidar/points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
