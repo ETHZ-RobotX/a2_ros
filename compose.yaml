@@ -107,8 +107,11 @@ services:
         - type=inline
     depends_on:
       - zenoh_router_sim
-    devices:
-      - /dev/input/js0:/dev/input/js0
+    # Privileged so the container gets host device access (e.g. the joystick at
+    # /dev/input) without bind-mounting Linux-only paths. This keeps startup
+    # working on macOS (no /dev/input there) and on Linux whether or not a
+    # controller is plugged in. Overrides the non-privileged x-common default.
+    privileged: true
     volumes:
       - *vol-x11
       - *vol-xauth
