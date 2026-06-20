@@ -185,21 +185,17 @@ Notes:
 
 ## 🎮 Gamepad
 
-| Input | Action |
-|---|---|
-| Left stick | Forward / strafe |
-| Right stick horizontal | Yaw |
-| X + L2 | Sit |
-| Triangle + L2 | Stand |
-| L2 + R2 | Walk |
+<p align="center">
+  <img src="docs/controller.png" alt="Gamepad controls: left stick = longitudinal/lateral, right stick = yaw, L2+△ steps the FSM to a higher state, L2+X to a lower state, ○ soft stop, PS button on/off" width="85%">
+</p>
 
 
-### Development
+## 🛠️ Development
 Development happens with the `a2_ros_dev` docker compose service. This contains all dependencies to run the stack in simulation along with object detection.
 
 To speed up development, many artifacts are cached using docker volumes. This includes the colcon build artifacts.
 
-#### Cleaning the ROS Workspace
+### Cleaning the ROS Workspace
 Colcon build artifacts live in named volumes mounted under `/a2_ros_ws` (`build`, `install`, `log`), so the directories can't be removed — only their contents. Use the `a2` CLI inside the container:
 ```bash
 a2 clean          # add --yes to skip the confirmation prompt
