@@ -5,9 +5,8 @@ topics:
   - /nav_vel_cmd
   - /imu/data
   - /registered_scan
-  - /rslidar/points
-  - /mujoco/front_lidar
-  - /mujoco/rear_lidar
+  - /front_lidar/points
+  - /rear_lidar/points
   - /state_estimation
   - /state_estimation_at_scan
   - /tf
