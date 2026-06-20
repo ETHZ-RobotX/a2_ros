@@ -97,7 +97,11 @@ jobs:
           file: ./environment/Dockerfile.dev
           target: a2_base
           platforms: ${{ env.PLATFORMS }}
-          push: ${{ github.event_name != 'pull_request' }}
+          # On PRs build into the Build Cloud cache only — a multi-node cloud
+          # builder can't "cloud pull" a multi-arch result back to the runner,
+          # so `push: false` (which loads locally) fails. On push/dispatch,
+          # export to the registry (pushes the multi-arch manifest to GHCR).
+          outputs: ${{ github.event_name == 'pull_request' && 'type=cacheonly' || 'type=registry' }}
           tags: ${{ steps.meta-a2-base.outputs.tags }}
           labels: ${{ steps.meta-a2-base.outputs.labels }}
           # Multi-arch manifest is cleaner without the extra provenance entry.
