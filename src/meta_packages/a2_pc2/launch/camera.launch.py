@@ -8,6 +8,7 @@ from launch_ros.actions import Node
 _WIDTH = 640
 _HEIGHT = 640
 _JPEG_QUALITY = 60  # 50–70 works well for YOLO; lower = smaller frames
+_FRAME_RATE = 5
 
 
 def generate_launch_description():
@@ -22,6 +23,7 @@ def generate_launch_description():
         "! application/x-rtp, media=video, encoding-name=H264 "
         "! rtph264depay ! h264parse ! avdec_h264 "
         "! videoconvert "
+        f"! videorate ! video/x-raw,framerate={_FRAME_RATE}/1 "
         f"! videoscale ! video/x-raw,format=I420,width={_WIDTH},height={_HEIGHT} "
         f"! jpegenc quality={_JPEG_QUALITY} "
         "! image/jpeg"
