@@ -1,5 +1,9 @@
 # a2_ros
 
+<p align="center">
+  <img src="docs/a2.png" alt="Unitree A2 quadruped" width="100%">
+</p>
+
 ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained RL locomotion policy.
 
 ## TODOs
