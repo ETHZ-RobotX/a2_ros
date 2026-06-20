@@ -24,7 +24,7 @@ def generate_launch_description():
     a2_pc2_launch_dir = os.path.join(get_package_share_directory('a2_pc2'), 'launch')
     a2_description_dir = get_package_share_directory('a2_description')
 
-    a2_ros_config_dir = os.path.join(get_package_share_directory('a2_ros'), 'config')
+    a2_ros_config_dir = os.path.join(get_package_share_directory('a2_pc2'), 'config')
 
     bridge_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -49,7 +49,7 @@ def generate_launch_description():
         output='screen',
             remappings={('/cmd_vel_out', '/cmd_vel')},
         parameters=[
-            os.path.join(a2_ros_config_dir, 'twist_mux', 'twist_mux_config.yaml'),
+            os.path.join(a2_ros_config_dir, 'twist_mux_config.yaml'),
             {'use_sim_time': False},
         ]
     )
