@@ -39,4 +39,4 @@ for target in "${TARGETS[@]}"; do
     fi
 done
 
-info "Clean complete. Run build_workspace.sh to rebuild."
+info "Clean complete. Run 'a2 build' to rebuild."
