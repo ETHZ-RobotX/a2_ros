@@ -37,17 +37,6 @@ ament_target_dependencies(stand_example
   rosbag2_cpp
 )
 
-# teleop_joy node (joystick teleoperation)
-add_executable(teleop_joy
-  src/teleop_joy.cpp
-)
-ament_target_dependencies(teleop_joy
-  rclcpp
-  geometry_msgs
-  sensor_msgs
-  a2_interfaces
-)
-
 add_executable(nav_vel_relay
   src/nav_vel_relay.cpp
 )
@@ -70,7 +59,6 @@ ament_target_dependencies(scan_pose_sync
 
 install(TARGETS
   stand_example
-  teleop_joy
   nav_vel_relay
   scan_pose_sync
   DESTINATION lib/${PROJECT_NAME}
