@@ -184,7 +184,7 @@ def generate_launch_description():
                 'maxSpeed':         0.5,
                 'maxAccel':         2.0,
                 'switchTimeThre':   1.0,
-                'dirDiffThre':      0.1,
+                'dirDiffThre':      0.5,
                 'stopDisThre':      0.3,
                 'slowDwnDisThre':   0.6,
                 'useInclRateToSlow': False,
