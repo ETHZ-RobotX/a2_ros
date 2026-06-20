@@ -1,6 +1,5 @@
 # syntax=docker/dockerfile:1
 ARG ROS_DISTRO=jazzy
-ARG MUJOCO_VERSION=3.5.0
 ARG USER=ubuntu
 
 # Pinned digest — update by running:

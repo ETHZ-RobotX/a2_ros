@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
 ARG ROS_IMAGE=ros@sha256:eac11a5285beeb1e1884e71f7091c610e08452e823bfb3f43afaa334375325f6
+ARG MUJOCO_VERSION=3.5.0
 
 # Name of image vended out from Dockerfile.base via GHCR
 ARG A2_BASE_IMAGE=ghcr.io/ethz-robotx/a2_ros/a2_base:main
