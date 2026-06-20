@@ -45,7 +45,14 @@ RUN mkdir -p /opt/mujoco && \
 
 # MCAP CLI — for offline bag inspection without a running ROS stack
 # Pin to a specific release: https://github.com/foxglove/mcap/releases
-RUN wget -q "https://github.com/foxglove/mcap/releases/latest/download/mcap-linux-amd64" \
+# Architecture-matched (uname -m: x86_64 -> amd64, aarch64 -> arm64) so the arm64
+# image ships a runnable binary, not an x86_64 one.
+RUN case "$(uname -m)" in \
+      x86_64) MCAP_ARCH=amd64 ;; \
+      aarch64|arm64) MCAP_ARCH=arm64 ;; \
+      *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
+    esac && \
+    wget -q "https://github.com/foxglove/mcap/releases/latest/download/mcap-linux-${MCAP_ARCH}" \
     -O /usr/local/bin/mcap && chmod +x /usr/local/bin/mcap
 
 # ONNX Runtime (architecture-matched). The locomotion controller vendors only
