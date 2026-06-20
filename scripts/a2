@@ -65,7 +65,8 @@ Introspection:
 
 Data:
   bag record [-a] [-t topics] [-i ignore] [-c config.yaml] [suffix]
-  bag play   <file>        Play back a rosbag
+  bag play   <file> [--clock] [--pause]   Play back a rosbag (bag name resolves
+                     against the bag dir; --clock publishes /clock, --pause starts paused)
 
 Utilities:
   plotjuggler        Launch PlotJuggler
@@ -200,10 +201,19 @@ case "$CMD" in
             play)
                 FILE="${ARGS[2]:-}"
                 if [[ -z "$FILE" ]]; then
-                    error "Usage: a2 bag play <file>"
+                    error "Usage: a2 bag play <file> [--clock] [--pause]"
                     exit 1
                 fi
-                ros2 bag play "$FILE"
+                # Resolve relative to the bag directory (same default as
+                # `a2 bag record`) so you can pass just the bag name; fall back
+                # to the path as given.
+                BAG_DIR="${ROS_BAGS_DIR:-${A2_WS_ROOT:-$WORKSPACE_DIR}/bags}"
+                if [[ ! -e "$FILE" && -e "$BAG_DIR/$FILE" ]]; then
+                    FILE="$BAG_DIR/$FILE"
+                fi
+                # Pass through any extra args, e.g. --clock (publish /clock) and
+                # --pause (start paused), straight to ros2 bag play.
+                ros2 bag play "$FILE" "${ARGS[@]:3}"
                 ;;
             *)
                 error "Usage: a2 bag record [OPTIONS] [SUFFIX] | a2 bag play <file>"

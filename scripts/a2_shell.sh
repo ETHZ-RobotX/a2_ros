@@ -22,7 +22,7 @@ _a2_complete() {
     ws="${WORKSPACE_DIR:-/a2_ros}"
 
     local commands="source build clean env log sim walk stop unlock stand sit \
-keyboard nav explore dlio detect topics nodes bag plotjuggler foxglove router verify patch help"
+keyboard nav explore dlio detect topics nodes bag plotjuggler foxglove router verify help"
 
     # Value after --scene: available scene files.
     if [[ "$prev" == "--scene" ]]; then
@@ -44,7 +44,8 @@ keyboard nav explore dlio detect topics nodes bag plotjuggler foxglove router ve
             if [[ $COMP_CWORD -eq 2 ]]; then
                 COMPREPLY=($(compgen -W "record play" -- "$cur"))
             elif [[ "${COMP_WORDS[2]}" == "play" ]]; then
-                COMPREPLY=($(compgen -f -- "$cur"))
+                COMPREPLY=($(compgen -W "--clock --pause" -- "$cur"))
+                COMPREPLY+=($(compgen -f -- "$cur"))
             fi
             ;;
         build)
