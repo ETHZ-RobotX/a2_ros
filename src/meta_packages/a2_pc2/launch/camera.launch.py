@@ -12,6 +12,10 @@ _JPEG_QUALITY = 60  # 50–70 works well for YOLO; lower = smaller frames
 
 def generate_launch_description():
 
+    camera_info_url = (
+        'package://a2_description/config/camera_info.yaml'
+    )
+
     gscam_config = (
         "udpsrc address=230.1.1.1 port=1720 multicast-iface=eth0 "
         "! queue "
@@ -40,6 +44,11 @@ def generate_launch_description():
             default_value=gscam_config,
             description='GStreamer pipeline string',
         ),
+        DeclareLaunchArgument(
+            'camera_info_url',
+            default_value=camera_info_url,
+            description='URL to camera calibration YAML',
+        ),
 
         Node(
             package='gscam2',
@@ -47,12 +56,14 @@ def generate_launch_description():
             name='gscam2',
             output='screen',
             parameters=[{
-                'gscam_config':   LaunchConfiguration('gscam_config'),
-                'camera_name':    LaunchConfiguration('camera_name'),
-                'image_encoding': LaunchConfiguration('image_encoding'),
+                'gscam_config':    LaunchConfiguration('gscam_config'),
+                'camera_name':     LaunchConfiguration('camera_name'),
+                'image_encoding':  LaunchConfiguration('image_encoding'),
+                'camera_info_url': LaunchConfiguration('camera_info_url'),
             }],
             remappings=[
-                ('image_raw/compressed', 'camera/image_raw/compressed'),
+                ('image_raw/compressed', 'camera/image/compressed'),
+                ('camera_info', 'camera/camera_info'),
             ],
         ),
 

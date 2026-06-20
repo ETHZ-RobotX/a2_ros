@@ -22,6 +22,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     bridge_launch_dir = get_package_share_directory('a2_unitree_bridge')
     a2_pc2_launch_dir = os.path.join(get_package_share_directory('a2_pc2'), 'launch')
+    a2_description_dir = get_package_share_directory('a2_description')
 
     bridge_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -50,10 +51,15 @@ def generate_launch_description():
         }]
     )
 
+    camera_info_url = (
+        'file://' + os.path.join(a2_description_dir, 'config', 'camera_info.yaml')
+    )
+
     camera_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(a2_pc2_launch_dir, 'camera.launch.py')
-        )
+        ),
+        launch_arguments={'camera_info_url': camera_info_url}.items(),
     )
 
     return LaunchDescription([
