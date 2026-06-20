@@ -43,16 +43,20 @@ RUN mkdir -p /opt/mujoco && \
     tar -xzf /tmp/mujoco.tar.gz -C /opt/mujoco/ && \
     rm /tmp/mujoco.tar.gz
 
-# MCAP CLI — for offline bag inspection without a running ROS stack
-# Pin to a specific release: https://github.com/foxglove/mcap/releases
+# MCAP CLI — for offline bag inspection without a running ROS stack.
+# Pinned to a specific mcap-cli release: the foxglove/mcap repo publishes
+# releases for several components, so `releases/latest` is NOT necessarily the
+# CLI — it 404s whenever a non-CLI release is newest. The CLI tag/download path
+# is `releases/mcap-cli/<ver>`. Bump via: https://github.com/foxglove/mcap/releases
 # Architecture-matched (uname -m: x86_64 -> amd64, aarch64 -> arm64) so the arm64
 # image ships a runnable binary, not an x86_64 one.
+ARG MCAP_VERSION=v0.2.0
 RUN case "$(uname -m)" in \
       x86_64) MCAP_ARCH=amd64 ;; \
       aarch64|arm64) MCAP_ARCH=arm64 ;; \
       *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
     esac && \
-    wget -q "https://github.com/foxglove/mcap/releases/latest/download/mcap-linux-${MCAP_ARCH}" \
+    wget -q "https://github.com/foxglove/mcap/releases/download/releases/mcap-cli/${MCAP_VERSION}/mcap-linux-${MCAP_ARCH}" \
     -O /usr/local/bin/mcap && chmod +x /usr/local/bin/mcap
 
 # ONNX Runtime (architecture-matched). The locomotion controller vendors only
