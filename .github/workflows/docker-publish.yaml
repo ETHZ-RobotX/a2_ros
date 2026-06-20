@@ -8,6 +8,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  # Build for x86_64 hosts/robot and arm64 (Apple-silicon) dev machines.
+  PLATFORMS: linux/amd64,linux/arm64
 
 jobs:
   build-and-push-image:
@@ -39,6 +41,13 @@ jobs:
           large-packages: true
           docker-images: true
           swap-storage: true
+
+      # Register QEMU so the amd64 runner can also build the arm64 image via
+      # emulation. https://github.com/docker/setup-qemu-action
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -81,9 +90,12 @@ jobs:
           context: .
           file: ./environment/Dockerfile.dev
           target: a2_base
+          platforms: ${{ env.PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-a2-base.outputs.tags }}
           labels: ${{ steps.meta-a2-base.outputs.labels }}
+          # Multi-arch manifest is cleaner without the extra provenance entry.
+          provenance: false
 
       # TODO: Attestation feature not available to private repositories.
       # Consider doing this once repo is public.
