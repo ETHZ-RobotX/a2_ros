@@ -16,6 +16,10 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   # Build for x86_64 hosts/robot and arm64 (Apple-silicon) dev machines.
   PLATFORMS: linux/amd64,linux/arm64
+  # Docker Build Cloud builder — gives native amd64 AND arm64 builders, so the
+  # arm64 image is built natively (no slow QEMU). Reuses the existing endpoint;
+  # change to a dedicated "<org>/<builder>" if you create one for this repo.
+  BUILD_CLOUD_ENDPOINT: deepanaleggedrobotics/rss26
 
 jobs:
   build-and-push-image:
@@ -37,29 +41,23 @@ jobs:
           submodules: recursive
           token: ${{ secrets.SUBMODULE_PAT }}
 
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
+      # Log in to Docker Hub — required to access the Docker Build Cloud builder
+      # (separate from the GHCR login below, which is only for pushing the image).
+      - name: Log in to Docker Hub (Build Cloud)
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
-          tool-cache: false   # keep actions tool cache (used by other steps)
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PAT }}
 
-      # Register QEMU so the amd64 runner can also build the arm64 image via
-      # emulation. https://github.com/docker/setup-qemu-action
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      # Set up BuildKit Docker container builder to be able to build
-      # multi-platform images and export cache
+      # Set up Buildx backed by Docker Build Cloud (native multi-arch builders).
       # https://github.com/docker/setup-buildx-action
-      - name: Set up Docker Buildx
+      - name: Set up Docker Buildx with Docker Build Cloud
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+        with:
+          driver: cloud
+          endpoint: ${{ env.BUILD_CLOUD_ENDPOINT }}
+          install: true
 
       # GHCR requires lowercase repository names; github.repository preserves case.
       - name: Lowercase image name
@@ -89,7 +87,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}/a2_base
 
-      - name: Build and push a2_base stage
+      - name: Build and push a2_base stage (multi-arch)
         id: push-a2-base
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
