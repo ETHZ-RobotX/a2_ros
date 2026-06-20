@@ -1,4 +1,4 @@
-# a2_ros
+# A2 ROS2 Workspace
 
 <p align="center">
   <img src="docs/a2.png" alt="Unitree A2 quadruped" width="100%">
@@ -6,7 +6,7 @@
 
 ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained RL locomotion policy.
 
-## TODOs
+## 📋 TODOs
 
 > **CRITICAL**
 > - [ ] `pathFollower` / `localPlanner` autonomy mode is overridden to `false` by the joystick node on every `/joy` message (axes[4] < 0.1 at rest). The `autonomyMode: True` launch parameter has no effect while a controller is connected. Either kill `joy_node` before running nav (`ros2 node kill /joy_node`), push the right stick forward to hold axes[4] > 0.1, or patch pathFollower/localPlanner to only respect the joystick override when `joySpeedRaw > 0`.
@@ -14,7 +14,7 @@ ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained R
 
 - [ ] Remove all source code from meta-package `a2_ros` and only maintain dependencies
 
-## Setup with Docker
+## 🐳 Setup with Docker
 
 ### Prerequisites
 1. Install [Docker](https://docs.docker.com/engine/install/). Note Linux systems need Docker Engine **not Docker Desktop**, MacOS needs Docker Desktop, Windows TBD.
@@ -92,7 +92,7 @@ docker compose down                  # stop and remove containers
 docker compose down -v               # also remove volumes (wipes build cache)
 ```
 
-## Meta Packages
+## 📦 Meta Packages
 
 The `src/meta_packages/` directory contains stack-level packages. Each one declares `exec_depend` entries for a particular deployment scenario — build it with `colcon build --packages-up-to <name>` to pull in all required dependencies. All launch files and config live in `a2_ros` and are launched from there, except `a2_pc2` which runs on a separate compute unit and owns its own launch files.
 
@@ -114,7 +114,7 @@ colcon build --packages-up-to a2_robot   # real robot
 colcon build --packages-up-to a2_sim_full  # simulation with perception
 ```
 
-## Launching Subsystems
+## 🚀 Launching Subsystems
 
 All launch files live in `a2_ros`. Use the `a2` CLI to invoke them:
 
@@ -156,7 +156,7 @@ a2 dlio --rviz
 
 Set a 2D Nav Goal in RViz to send the robot to a target pose.
 
-## Visualization (Foxglove)
+## 📊 Visualization (Foxglove)
 
 A prebuilt [Foxglove Studio](https://foxglove.dev/) layout for the full stack ships at
 [`docs/rss26_layout.json`](docs/rss26_layout.json).
@@ -186,7 +186,7 @@ Notes:
 - The `/detection_annotations` overlay only appears when the object-detection node is running (`a2 detect`).
 - Send navigation goals straight from the 3D panel using the `/goal_point` (far_planner) publish control.
 
-## Gamepad
+## 🎮 Gamepad
 
 | Input | Action |
 |---|---|
