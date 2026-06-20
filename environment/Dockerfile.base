@@ -8,7 +8,6 @@ ARG ROS_IMAGE=ros@sha256:eac11a5285beeb1e1884e71f7091c610e08452e823bfb3f43afaa33
 
 # Builder image for non-ros dependencies to the base image
 FROM ${ROS_IMAGE} AS build-tools
-ARG MUJOCO_VERSION
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
