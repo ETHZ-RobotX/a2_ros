@@ -7,7 +7,7 @@ Starts:
   - joint_states_pub    : republishes /lowstate motor positions as /joint_states
   - imu_pub             : republishes /lowstate IMU as /imu/data (needed by DLIO)
   - joy_node            : reads gamepad from /dev/input/js0
-  - teleop_joy          : maps gamepad axes/buttons to /cmd_vel and /mode
+  - teleop_joy          : maps gamepad axes/buttons to /joy_vel (via twist_mux) and /a2/mode
 
 Always on:
   - robot_state_publisher : broadcasts fixed TF links from URDF

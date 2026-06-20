@@ -8,7 +8,7 @@ Starts:
   - a2_bridge            : republishes /lowstate as /joint_states, /imu/data, /odom, /state_estimation;
                            transforms /front_lidar/points into map frame → /registered_scan; broadcasts TF
   - joy_node             : reads gamepad from /dev/input/js0
-  - teleop_joy           : maps gamepad axes/buttons to /cmd_vel and /mode
+  - teleop_joy           : maps gamepad axes/buttons to /joy_vel (via twist_mux) and /a2/mode
 
 Arguments:
   dlio:=false  (default) — a2_bridge broadcasts ground-truth map→base_link TF.
