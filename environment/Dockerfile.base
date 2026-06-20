@@ -1,0 +1,191 @@
+# syntax=docker/dockerfile:1
+ARG ROS_DISTRO=jazzy
+ARG MUJOCO_VERSION=3.5.0
+ARG USER=ubuntu
+
+# Pinned digest — update by running:
+#   docker pull ros:jazzy && docker inspect ros:jazzy --format '{{index .RepoDigests 0}}'
+ARG ROS_IMAGE=ros@sha256:eac11a5285beeb1e1884e71f7091c610e08452e823bfb3f43afaa334375325f6
+
+# Builder image for non-ros dependencies to the base image
+FROM ${ROS_IMAGE} AS build-tools
+ARG MUJOCO_VERSION
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    wget \
+    python3-pip \
+    python3.12-venv
+
+FROM build-tools AS builder
+
+# Build Unitree SDK2
+RUN git clone --depth=1 https://github.com/unitreerobotics/unitree_sdk2.git
+
+RUN cmake -S unitree_sdk2 -B unitree_sdk2/build \
+    -DCMAKE_INSTALL_PREFIX=/opt/unitree_robotics
+
+RUN cmake --build "unitree_sdk2/build" --target install -- -j"$(nproc)"
+
+# MCAP CLI — for offline bag inspection without a running ROS stack.
+# Pinned to a specific mcap-cli release: the foxglove/mcap repo publishes
+# releases for several components, so `releases/latest` is NOT necessarily the
+# CLI — it 404s whenever a non-CLI release is newest. The CLI tag/download path
+# is `releases/mcap-cli/<ver>`. Bump via: https://github.com/foxglove/mcap/releases
+# Architecture-matched (uname -m: x86_64 -> amd64, aarch64 -> arm64) so the arm64
+# image ships a runnable binary, not an x86_64 one.
+ARG MCAP_VERSION=v0.2.0
+RUN case "$(uname -m)" in \
+      x86_64) MCAP_ARCH=amd64 ;; \
+      aarch64|arm64) MCAP_ARCH=arm64 ;; \
+      *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
+    esac && \
+    wget -q "https://github.com/foxglove/mcap/releases/download/releases/mcap-cli/${MCAP_VERSION}/mcap-linux-${MCAP_ARCH}" \
+    -O /usr/local/bin/mcap && chmod +x /usr/local/bin/mcap
+
+# ONNX Runtime (architecture-matched). The locomotion controller vendors only
+# an x86_64 build under third_party/; download the build matching the target
+# arch here so arm64 images get a working library too. Consumed by the
+# controller's CMake via the ONNXRUNTIME_ROOT env var set in later stages.
+# The final ln creates the soname symlink (libonnxruntime.so.1) that the
+# executable's DT_NEEDED requires — upstream tarballs ship only lib/
+# libonnxruntime.so -> .so.<version> and omit the intermediate soname link.
+ARG ONNXRUNTIME_VERSION=1.21.0
+RUN mkdir -p /opt/onnxruntime && \
+    case "$(uname -m)" in \
+      x86_64) ORT_ARCH=x64 ;; \
+      aarch64|arm64) ORT_ARCH=aarch64 ;; \
+      *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
+    esac && \
+    wget -q "https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/onnxruntime-linux-${ORT_ARCH}-${ONNXRUNTIME_VERSION}.tgz" \
+    -O /tmp/onnxruntime.tgz && \
+    tar -xzf /tmp/onnxruntime.tgz -C /opt/onnxruntime --strip-components=1 && \
+    rm /tmp/onnxruntime.tgz && \
+    ln -sf "libonnxruntime.so.${ONNXRUNTIME_VERSION}" \
+           "/opt/onnxruntime/lib/libonnxruntime.so.1"
+
+# Python Environment Builder: Really Slow
+FROM build-tools AS pyenv-builder
+
+# Python virtual environments
+# Copy all requirements txt file in the high level one.
+COPY requirements.txt .
+COPY src/object_detection/requirements.txt src/object_detection/requirements.txt
+
+# Setup and install python venv (--system-site-packages to inherit ROS 2 Python packages)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m venv --system-site-packages /opt/venv && \
+    /opt/venv/bin/pip install -r requirements.txt
+
+################################################################################
+# A2 Base Image                                                                #
+# Installs all apt packages and the python venv. Runs as root.                 #
+# No user creation here. No source code for the A2 workspace                   #
+################################################################################
+FROM ${ROS_IMAGE} AS a2_base
+ARG ROS_DISTRO
+
+# System & build tools — changes rarely
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    wget \
+    bash-completion \
+    python3-argcomplete \
+    python3-pip \
+    python3.12-venv \
+    openssh-client \
+    libx11-dev \
+    xorg-dev \
+    qtdeclarative5-dev \
+    libyaml-cpp-dev \
+    libspdlog-dev \
+    libboost-all-dev \
+    libfmt-dev \
+    libglfw3-dev \
+    libpcap-dev \
+    libopencv-dev
+
+# ROS core — middleware, control, robot description
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
+    ros-${ROS_DISTRO}-rmw-zenoh-cpp \
+    ros-${ROS_DISTRO}-urdf \
+    ros-${ROS_DISTRO}-xacro \
+    ros-${ROS_DISTRO}-urdfdom-py \
+    ros-${ROS_DISTRO}-robot-state-publisher \
+    ros-${ROS_DISTRO}-joy \
+    ros-${ROS_DISTRO}-teleop-twist-keyboard \
+    ros-${ROS_DISTRO}-foxglove-msgs \
+    ros-${ROS_DISTRO}-ros2-control \
+    ros-${ROS_DISTRO}-ros2-controllers \
+    ros-${ROS_DISTRO}-controller-manager \
+    ros-${ROS_DISTRO}-twist-mux
+
+# Perception — pointcloud, vision, camera, gstreamer
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    ros-${ROS_DISTRO}-pcl-conversions \
+    ros-${ROS_DISTRO}-pcl-ros \
+    ros-${ROS_DISTRO}-cv-bridge \
+    ros-${ROS_DISTRO}-vision-opencv \
+    ros-${ROS_DISTRO}-camera-calibration-parsers \
+    ros-${ROS_DISTRO}-camera-info-manager \
+    ros-${ROS_DISTRO}-image-transport \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    libgstreamer-plugins-good1.0-dev \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav \
+    gstreamer1.0-tools
+
+# Visualization & analysis — most likely to grow
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    ros-${ROS_DISTRO}-rviz2 \
+    ros-${ROS_DISTRO}-plotjuggler-ros \
+    ros-${ROS_DISTRO}-foxglove-bridge \
+    ros-${ROS_DISTRO}-joint-state-publisher \
+    ros-${ROS_DISTRO}-joint-state-publisher-gui \
+    ros-${ROS_DISTRO}-rqt \
+    ros-${ROS_DISTRO}-rqt-common-plugins \
+    ros-${ROS_DISTRO}-rqt-tf-tree
+
+# Developer tools — most likely to change
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    tmux \
+    btop \
+    gdb
+
+# empy required by colcon at build time (system Python, not venv)
+RUN python3 -m pip install --break-system-packages "empy==3.3.4"
+
+# Python venv from builder — added to PATH so it's always active
+COPY --from=pyenv-builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# MCAP CLI from builder
+COPY --from=builder /usr/local/bin/mcap /usr/local/bin/mcap
+
+# Copy Unitree SDK from Builder
+COPY --from=builder /opt/unitree_robotics /opt/unitree_robotics
+
+# Arch-matched ONNX Runtime for the locomotion controller (see builder stage).
+COPY --from=builder /opt/onnxruntime /opt/onnxruntime
+ENV ONNXRUNTIME_ROOT=/opt/onnxruntime

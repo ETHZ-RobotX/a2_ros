@@ -93,7 +93,7 @@ jobs:
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
-          file: ./environment/Dockerfile.dev
+          file: ./environment/Dockerfile.base
           target: a2_base
           platforms: ${{ env.PLATFORMS }}
           # On PRs build into the Build Cloud cache only — a multi-node cloud
