@@ -188,6 +188,24 @@ Notes:
 - The `/detection_annotations` overlay only appears when the object-detection node is running (`a2 detect`).
 - Send navigation goals straight from the 3D panel using the `/goal_point` (far_planner) publish control.
 
+## 💾 Recording & Playback
+
+Record ROS 2 topics to MCAP and replay them with the `a2` CLI. Bags are written to the bag directory — `$ROS_BAGS_DIR`, default `/a2_ros_ws/bags` in the container (bind-mounted to `./bags` on the host) — named `bag_<timestamp>[_suffix]`.
+
+**Record** — choose what to capture (`--all`, `--topics`, or a `--config` YAML); stop with Ctrl+C:
+```bash
+a2 bag record --all run1                                    # everything, suffix "run1"
+a2 bag record --all --ignore '/camera/image_raw'           # all except some topics
+a2 bag record --topics '/cmd_vel /odom /registered_scan' nav_test
+```
+A `--config` YAML can set `all:`, `topics:`, and `ignore:` (see `a2 bag record --help`).
+
+**Play back** — pass just the bag name (resolved against the bag dir) or a full path:
+```bash
+a2 bag play bag_<timestamp>_run1                  # from the bag dir
+a2 bag play bag_<timestamp>_run1 --clock --pause  # publish /clock, start paused
+```
+
 ## 🎮 Gamepad
 
 > These controls are for driving the **real robot**.
