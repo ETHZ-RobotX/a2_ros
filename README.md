@@ -38,13 +38,15 @@ The `.env` file is gitignored and personal to your machine. It is also sourced b
 | `ZENOH_ROUTER_IP_SIM` | Router address sim nodes connect to | `127.0.0.1` |
 | `ZENOH_ROUTER_IP_ROBOT` | Router address robot nodes connect to | `127.0.0.1` |
 | `ZENOH_ROUTER_IP` | Shared fallback used if the per-profile vars are unset | `127.0.0.1` |
-| `ROS_BAGS_DIR` | Host directory bind-mounted to `/a2_ros/bags` | `./bags` |
+| `ROS_BAGS_DIR` | Host directory bind-mounted to `/a2_ros_ws/bags` | `./bags` |
 
 ### Build and spawn
 ```bash
 docker compose build a2_ros_dev
 docker compose up -d a2_ros_dev
 ```
+
+> `a2_ros_dev` builds on top of the prebuilt **`a2_base`** image, which CI publishes multi-arch (x86_64 **and** arm64 — Apple Silicon works) to GHCR. The base is therefore **pulled, not built locally**. After CI publishes a new base, refresh it with `docker compose build --pull a2_ros_dev` (a plain `build` keeps the cached base). To build the base yourself instead, set `A2_BASE_IMAGE=a2_ros:base` and run `docker compose build a2_base` first.
 
 Enter the container:
 ```bash
@@ -78,11 +80,6 @@ scripts/start_zenoh_router.sh
 ```
 
 > Run only **one** router per host — `zenoh_router_sim` and `zenoh_router_robot` both bind TCP `7447`. For a multi-machine setup, run the router on one host and set `ZENOH_ROUTER_IP_SIM` / `ZENOH_ROUTER_IP_ROBOT` in `.env` on the others.
-
-**Note:** Build artifacts are stored in Docker named volumes, so cleaning the workspace requires deleting the contents rather than the directories:
-```bash
-rm -rf build/* install/* log
-```
 
 ### Stopping
 ```bash
@@ -119,7 +116,7 @@ All launch files live in `a2_ros`. Use the `a2` CLI to invoke them:
 
 | Command | Launch file | Description |
 |---|---|---|
-| `a2 start [--rviz] [--dlio]` | `sim.launch.py` | MuJoCo simulation + locomotion controller |
+| `a2 sim [--rviz] [--dlio] [--scene <file>]` | `sim.launch.py` | MuJoCo simulation + locomotion controller |
 | `a2 nav [--rviz]` | `navigation.launch.py` | CMU navigation stack (terrain analysis + path planner) |
 | `a2 explore [--rviz]` | `exploration.launch.py` | Autonomous exploration (TARE planner) |
 | `a2 dlio [--rviz]` | `dlio.launch.py` | DLIO LiDAR-inertial odometry |
@@ -136,7 +133,7 @@ ros2 launch a2_pc2 camera.launch.py
 
 **Terminal 1 — simulation:**
 ```bash
-a2 start
+a2 sim
 ```
 
 **Terminal 2 — walk:**
@@ -172,7 +169,7 @@ Development happens with the `a2_ros_dev` docker compose service. This contains 
 To speed up development, many artifacts are cached using docker volumes. This includes the colcon build artifacts.
 
 #### Cleaning the ROS Workspace
-Since the build artifacts are also a volume, the folders cannot be deleted. However, their contents can be deleted.
+Colcon build artifacts live in named volumes mounted under `/a2_ros_ws` (`build`, `install`, `log`), so the directories can't be removed — only their contents. Use the `a2` CLI inside the container:
 ```bash
-$ rm -rf build/* install/* log
+a2 clean          # add --yes to skip the confirmation prompt
 ```
