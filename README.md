@@ -156,6 +156,36 @@ a2 dlio --rviz
 
 Set a 2D Nav Goal in RViz to send the robot to a target pose.
 
+## Visualization (Foxglove)
+
+A prebuilt [Foxglove Studio](https://foxglove.dev/) layout for the full stack ships at
+[`docs/rss26_layout.json`](docs/rss26_layout.json).
+
+Download and install Foxglove Studio from [foxglove.dev/download](https://foxglove.dev/download).
+
+**1. Start the Foxglove bridge** — exposes ROS topics over a WebSocket at `ws://localhost:8765`
+(in sim it is launched with `use_sim_time` so timestamps track `/clock`):
+```bash
+a2 foxglove
+```
+
+**2. Connect and load the layout** in Foxglove Studio (desktop or web app):
+- Add a connection → **Foxglove WebSocket** → `ws://localhost:8765`.
+- **Layouts** → **Import from file…** → select `docs/rss26_layout.json`.
+
+The layout contains:
+
+| Panel | Shows |
+|---|---|
+| **3D** | Robot model + TF, front/rear lidar (`/mujoco/front_lidar`, `/mujoco/rear_lidar`), `/registered_scan`, terrain maps, navigation paths/goals, and TARE exploration markers |
+| **Image** | `/camera/image_raw` with object-detection overlays (`/detection_annotations`, `/detections_in_image`) |
+| **Transform Tree** | Live TF tree |
+| **Joystick** | Live gamepad input |
+
+Notes:
+- The `/detection_annotations` overlay only appears when the object-detection node is running (`a2 detect`).
+- Send navigation goals straight from the 3D panel using the `/goal_point` (far_planner) publish control.
+
 ## Gamepad
 
 | Input | Action |
