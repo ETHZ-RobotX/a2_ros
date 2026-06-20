@@ -116,14 +116,14 @@ All launch files live in `a2_ros`. Use the `a2` CLI to invoke them:
 | `a2 nav [--rviz]` | `navigation.launch.py` | CMU navigation stack (terrain analysis + path planner) |
 | `a2 explore [--rviz]` | `exploration.launch.py` | Autonomous exploration (TARE planner) |
 | `a2 dlio [--rviz]` | `dlio.launch.py` | DLIO LiDAR-inertial odometry |
-| — | `real.launch.py` | Real robot — locomotion executor + bridge (NUC) |
-| — | `teleop_joy.launch.py` | Joystick teleop |
+| `a2 detect` | `object_detection.launch.py` | Object detection (ONNX Runtime); uses `object_detection_real.launch.py` on the robot |
 
-For `a2_pc2` (run directly on the second compute unit):
-```bash
-ros2 launch a2_pc2 pc2.launch.py
-ros2 launch a2_pc2 camera.launch.py
-```
+**`a2 sim` options:**
+- `--rviz` — also open RViz.
+- `--dlio` — use DLIO for odometry instead of ground-truth TF (run `a2 dlio` in another terminal).
+- `--scene <file>` — pick the MuJoCo scene: `scene.xml` (default), `scene_flat.xml`, `scene_terrain.xml`, `scene_obstacles.xml`, `scene_maze.xml`, `scene_test_meshes.xml`.
+
+> Running on the second compute unit (**pc2**)? Its setup and launch live in [`docs/pc2.md`](docs/pc2.md).
 
 ### Typical simulation workflow
 
@@ -132,21 +132,31 @@ ros2 launch a2_pc2 camera.launch.py
 a2 sim
 ```
 
-**Terminal 2 — walk:**
+**Terminal 2 — bring the robot up, then walk** (run in order):
 ```bash
-a2 walk
+a2 stand     # stand up
+a2 unlock    # release to balance stand
+a2 walk      # start walking
 ```
+Then `a2 stop` to stop moving (keeps balance), and `a2 sit` to sit / stand down.
+
+To drive manually with the keyboard, run `a2 keyboard` in its own terminal once the robot is in walk mode — it publishes `/cmd_vel` from your key presses.
 
 **Terminal 3 — navigation / exploration / odometry:**
+
 ```bash
+# Set a 2D Nav Goal in RViz to send the robot to a target pose.
 a2 nav --rviz
-# or
+# Autonomous Exploration
 a2 explore --rviz
-# or
+# LIO State Estimation
 a2 dlio --rviz
 ```
 
-Set a 2D Nav Goal in RViz to send the robot to a target pose.
+**Terminal 4 — object detection:**
+```bash
+a2 detect
+```
 
 ## 📊 Visualization (Foxglove)
 
@@ -179,6 +189,8 @@ Notes:
 - Send navigation goals straight from the 3D panel using the `/goal_point` (far_planner) publish control.
 
 ## 🎮 Gamepad
+
+> These controls are for driving the **real robot**.
 
 <p align="center">
   <img src="docs/controller.png" alt="Gamepad controls: left stick = longitudinal/lateral, right stick = yaw, L2+△ steps the FSM to a higher state, L2+X to a lower state, ○ soft stop, PS button on/off" width="85%">
