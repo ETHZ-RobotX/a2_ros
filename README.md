@@ -220,6 +220,43 @@ Development happens with the `a2_ros_dev` docker compose service. This contains 
 
 To speed up development, many artifacts are cached using docker volumes. This includes the colcon build artifacts.
 
+### Git Submodules
+This repo pulls in its packages as git submodules (see `.gitmodules`). Handy commands:
+
+```bash
+# Clone everything from scratch (submodules included)
+git clone git@github.com:ETHZ-RobotX/a2_ros.git --recursive
+
+# Check out the pinned submodule commits. Run this after a non-recursive clone,
+# and after every `git pull` of main, to sync submodules to the commits this
+# repo pins.
+git submodule update --init --recursive
+# ...or have git do it automatically on every pull/checkout:
+git config submodule.recurse true
+
+# See which submodules changed (or are on the wrong commit)
+git submodule status
+git status
+
+# Pull the latest upstream for every submodule (moves them off the pinned commit)
+git submodule update --remote --merge
+
+# If a submodule URL changed in .gitmodules, re-sync the local config
+git submodule sync --recursive
+```
+
+Submodules check out a detached HEAD at the pinned commit. To work in one, `cd` into it
+(paths vary — many live under `src/`, not `external/`; see `.gitmodules`), check out its
+branch, commit and push there first, then commit the new submodule pointer in this repo:
+```bash
+cd <submodule-path>            # e.g. src/object_detection or external/unitree_mujoco
+git checkout <branch> && git pull   # the submodule's own branch (often main)
+# ... make changes, commit, push ...
+cd -
+git add <submodule-path>       # records the new pinned commit
+git commit -m "bump <submodule>"
+```
+
 ### Cleaning the ROS Workspace
 Colcon build artifacts live in named volumes mounted under `/a2_ros_ws` (`build`, `install`, `log`), so the directories can't be removed — only their contents. Use the `a2` CLI inside the container:
 ```bash
