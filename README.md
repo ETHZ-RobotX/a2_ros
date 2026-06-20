@@ -257,6 +257,43 @@ git add <submodule-path>       # records the new pinned commit
 git commit -m "bump <submodule>"
 ```
 
+**Feature branches & avoiding submodule conflicts.** A submodule pointer is a single
+gitlink in the superproject tree, so if two branches bump the same submodule to different
+commits, merging produces a conflict on that path. To keep this painless:
+
+```bash
+# Always commit on a branch inside the submodule, never on the detached HEAD.
+cd <submodule-path>
+git switch -c my-feature        # or: git checkout <existing-branch>
+# ... work, commit ...
+git push -u origin my-feature   # push the submodule branch FIRST — others (and CI)
+cd -                            # can't fetch a pointer to an unpushed commit
+git add <submodule-path> && git commit -m "bump <submodule> to my-feature"
+
+# Make the two repos move together so branch switches don't leave stale checkouts,
+# and so pushing the superproject also pushes any new submodule commits:
+git config submodule.recurse true
+git config push.recurseSubmodules on-demand
+```
+
+Resolving a pointer conflict (the conflict is over *which commit* to pin, so pick one —
+don't hand-edit the gitlink):
+```bash
+git checkout <branch-or-ref> -- <submodule-path>   # take that side's pinned commit
+# ...or pin an explicit commit:
+cd <submodule-path> && git checkout <sha> && cd -
+git add <submodule-path>                           # marks it resolved
+```
+
+**Forking.** `.gitmodules` pins upstream `ETHZ-RobotX` URLs. If you fork a submodule to push
+your own work, point your local clone at the fork **without committing the URL change** (so
+you don't conflict with upstream `.gitmodules` or break others):
+```bash
+git submodule set-url <submodule-path> git@github.com:<you>/<repo>.git
+git submodule sync <submodule-path>            # apply the URL to your local .git/config
+git update-index --skip-worktree .gitmodules   # keep the URL edit local-only
+```
+
 ### Cleaning the ROS Workspace
 Colcon build artifacts live in named volumes mounted under `/a2_ros_ws` (`build`, `install`, `log`), so the directories can't be removed — only their contents. Use the `a2` CLI inside the container:
 ```bash
