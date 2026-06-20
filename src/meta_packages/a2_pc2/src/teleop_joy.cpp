@@ -9,11 +9,17 @@
 //   L2 + Triangle (rising edge) : step mode up  (1→2→3→4); from FREE → VELOCITY_MOVE
 //   L2 + Cross    (rising edge) : step mode down (4→3→2→1); from FREE → STAND_DOWN
 //   Circle        (rising edge) : go to FREE from any mode
+//
+// Haptic feedback (TYPE_RUMBLE, id=0):
+//   intensity 0.1 : successful transition into or out of VELOCITY_MOVE
+//   intensity 0.5 : any rejected mode transition
 
 #include <memory>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <sensor_msgs/msg/joy.hpp>
+#include <sensor_msgs/msg/joy_feedback.hpp>
 #include <a2_interfaces/msg/operating_mode.hpp>
+#include <a2_interfaces/srv/set_operating_mode.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace {
@@ -25,7 +31,8 @@ namespace {
   constexpr int AXIS_L2      = 2;
   constexpr int AXIS_RS_H    = 3;
 
-  using OM = a2_interfaces::msg::OperatingMode;
+  using OM  = a2_interfaces::msg::OperatingMode;
+  using SOM = a2_interfaces::srv::SetOperatingMode;
 }
 
 class QuadrupedTeleop : public rclcpp::Node
@@ -37,8 +44,10 @@ public:
     this->declare_parameter("linear_y_limit",  0.10);
     this->declare_parameter("angular_z_limit", 0.10);
 
-    twist_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel", 10);
-    mode_pub_  = this->create_publisher<OM>("/a2/mode", 10);
+    twist_pub_    = this->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel", 10);
+    feedback_pub_ = this->create_publisher<sensor_msgs::msg::JoyFeedback>("/joy/set_feedback", 10);
+
+    mode_client_ = this->create_client<SOM>("/a2/set_mode");
 
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
       "joy", 10,
@@ -51,13 +60,44 @@ public:
   }
 
 private:
-  void publishMode(uint8_t mode)
+  void publishFeedback(float intensity)
   {
-    current_mode_ = mode;
-    OM msg;
-    msg.mode = mode;
-    mode_pub_->publish(msg);
-    RCLCPP_INFO(this->get_logger(), "Mode → %d", mode);
+    sensor_msgs::msg::JoyFeedback fb;
+    fb.type      = sensor_msgs::msg::JoyFeedback::TYPE_RUMBLE;
+    fb.id        = 0;
+    fb.intensity = intensity;
+    feedback_pub_->publish(fb);
+  }
+
+  void requestMode(uint8_t target_mode)
+  {
+    if (!mode_client_->service_is_ready()) {
+      RCLCPP_WARN(this->get_logger(), "set_mode service not available");
+      publishFeedback(0.5f);
+      return;
+    }
+
+    auto req   = std::make_shared<SOM::Request>();
+    req->mode  = target_mode;
+
+    uint8_t from_mode = current_mode_;
+
+    mode_client_->async_send_request(req,
+      [this, target_mode, from_mode](rclcpp::Client<SOM>::SharedFuture future) {
+        auto resp = future.get();
+        if (resp->success) {
+          current_mode_ = resp->current_mode;
+          RCLCPP_INFO(this->get_logger(), "Mode → %d", current_mode_);
+          bool velocity_move_involved =
+            (target_mode == OM::VELOCITY_MOVE) || (from_mode == OM::VELOCITY_MOVE);
+          if (velocity_move_involved)
+            publishFeedback(0.1f);
+        } else {
+          RCLCPP_WARN(this->get_logger(),
+            "Mode transition to %d rejected: %s", target_mode, resp->message.c_str());
+          publishFeedback(0.5f);
+        }
+      });
   }
 
   void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
@@ -101,25 +141,26 @@ private:
     // --- FSM transitions ---
     if (circle_press) {
       if (current_mode_ != OM::FREE)
-        publishMode(OM::FREE);
+        requestMode(OM::FREE);
     } else if (l2_tri_press) {
       if (current_mode_ == OM::FREE) {
-        publishMode(OM::VELOCITY_MOVE);
+        requestMode(OM::VELOCITY_MOVE);
       } else if (current_mode_ < OM::VELOCITY_MOVE) {
-        publishMode(current_mode_ + 1u);
+        requestMode(current_mode_ + 1u);
       }
     } else if (l2_cross_press) {
       if (current_mode_ == OM::FREE) {
-        publishMode(OM::STAND_DOWN);
+        requestMode(OM::STAND_DOWN);
       } else if (current_mode_ > OM::STAND_DOWN) {
-        publishMode(current_mode_ - 1u);
+        requestMode(current_mode_ - 1u);
       }
     }
   }
 
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
-  rclcpp::Publisher<OM>::SharedPtr mode_pub_;
-  rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
+  rclcpp::Publisher<sensor_msgs::msg::JoyFeedback>::SharedPtr    feedback_pub_;
+  rclcpp::Client<SOM>::SharedPtr                                 mode_client_;
+  rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr         joy_sub_;
 
   uint8_t current_mode_ = OM::STAND_DOWN;
   bool prev_l2_tri_   = false;
