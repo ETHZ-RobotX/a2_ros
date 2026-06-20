@@ -6,11 +6,6 @@
 
 ROS2 (Jazzy) simulation of the Unitree A2 quadruped using MuJoCo and a trained RL locomotion policy.
 
-## 📋 TODOs
-
-> **CRITICAL**
-> - [ ] `pathFollower` / `localPlanner` autonomy mode is overridden to `false` by the joystick node on every `/joy` message (axes[4] < 0.1 at rest). The `autonomyMode: True` launch parameter has no effect while a controller is connected. Either kill `joy_node` before running nav (`ros2 node kill /joy_node`), push the right stick forward to hold axes[4] > 0.1, or patch pathFollower/localPlanner to only respect the joystick override when `joySpeedRaw > 0`.
-
 ## 🐳 Setup with Docker
 
 ### Prerequisites
