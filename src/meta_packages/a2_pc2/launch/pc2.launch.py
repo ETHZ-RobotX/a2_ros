@@ -24,7 +24,7 @@ def generate_launch_description():
     a2_pc2_launch_dir = os.path.join(get_package_share_directory('a2_pc2'), 'launch')
     a2_description_dir = get_package_share_directory('a2_description')
 
-    a2_ros_config_dir = os.path.join(get_package_share_directory('a2_pc2'), 'config')
+    a2_ros_config_dir = os.path.join(get_package_share_directory('a2_ros'), 'config')
 
     bridge_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(

@@ -40,6 +40,9 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
     description_dir = get_package_share_directory('a2_description')
+    a2_ros_dir = get_package_share_directory('a2_ros')
+
+
 
     # ---------- launch arguments ----------
     scene_arg = DeclareLaunchArgument(
@@ -62,7 +65,6 @@ def generate_launch_description():
     scene_path = PathJoinSubstitution([description_dir, 'mjcf', LaunchConfiguration('scene')])
     mjcf_dir   = os.path.join(description_dir, 'mjcf')
     urdf_path  = os.path.join(description_dir, 'urdf', 'a2.urdf')
-    a2_ros_dir = get_package_share_directory('a2_ros')
     rviz_path  = os.path.join(a2_ros_dir, 'rviz', 'default.rviz')
 
     dlio = LaunchConfiguration('dlio')
@@ -141,6 +143,18 @@ def generate_launch_description():
             'use_sim_time': True,
         }],
     )
+    
+    twist_mux_node = Node(
+        package='twist_mux',
+        executable='twist_mux',
+        name='twist_mux',
+        output='screen',
+            remappings={('/cmd_vel_out', '/cmd_vel')},
+        parameters=[
+            os.path.join(a2_ros_dir, 'config', 'twist_mux_config.yaml'),
+            {'use_sim_time': False},
+        ]
+    )
 
     rviz_node = Node(
         package='rviz2',
@@ -161,6 +175,7 @@ def generate_launch_description():
         a2_bridge_node,
         a2_bridge_dlio,
         joy_node,
+        twist_mux_node,
         teleop_node,
         robot_state_pub_node,
         rviz_node,
