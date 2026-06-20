@@ -1,6 +1,5 @@
 /**:
   ros__parameters:
-    # A2 robot frame names
     frames/odom: dlio_odom
     frames/baselink: base_link
     frames/lidar: front_lidar_link
@@ -14,4 +13,3 @@
     extrinsics/baselink2lidar/R: [ 0.,  0.,  1.,
                                    1.,  0.,  0.,
                                    0.,  1.,  0. ]
-

@@ -40,7 +40,7 @@ from launch_ros.actions import Node, SetParameter
 def generate_launch_description():
     description_dir = get_package_share_directory('a2_description')
     a2_ros_dir      = get_package_share_directory('a2_ros')
-    rviz_path        = os.path.join(description_dir, 'rviz', 'exploration.rviz')
+    rviz_path        = os.path.join(a2_ros_dir, 'rviz', 'exploration.rviz')
     tare_config      = os.path.join(a2_ros_dir, 'config', 'autonomy', 'tare_a2.yaml')
 
     rviz_arg = DeclareLaunchArgument(

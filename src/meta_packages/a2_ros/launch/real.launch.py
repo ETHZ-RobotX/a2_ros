@@ -39,8 +39,9 @@ def generate_launch_description():
         description='Launch RViz2 visualisation'
     )
 
+    a2_ros_dir = get_package_share_directory('a2_ros')
     urdf_path = os.path.join(description_dir, 'urdf', 'a2.urdf')
-    rviz_path = os.path.join(description_dir, 'rviz', 'default.rviz')
+    rviz_path = os.path.join(a2_ros_dir, 'rviz', 'default.rviz')
 
     locomotion_node = Node(
         package='a2_locomotion_controller',

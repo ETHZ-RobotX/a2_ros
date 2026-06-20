@@ -62,7 +62,8 @@ def generate_launch_description():
     scene_path = PathJoinSubstitution([description_dir, 'mjcf', LaunchConfiguration('scene')])
     mjcf_dir   = os.path.join(description_dir, 'mjcf')
     urdf_path  = os.path.join(description_dir, 'urdf', 'a2.urdf')
-    rviz_path  = os.path.join(description_dir, 'rviz', 'default.rviz')
+    a2_ros_dir = get_package_share_directory('a2_ros')
+    rviz_path  = os.path.join(a2_ros_dir, 'rviz', 'default.rviz')
 
     dlio = LaunchConfiguration('dlio')
 
