@@ -39,13 +39,14 @@ Usage: a2 <command> [options]
 
 Workspace:
   source             Source the ROS/workspace environment (same as running a2)
-  build [package]    Build the workspace, or up to a specific package
+  build [package] [colcon args...]  Build the workspace, or up to a specific package;
+                     extra args are forwarded to colcon build (e.g. --executor sequential)
   clean [--yes]      Remove build/install/log artifacts (--yes skips confirmation)
   env                Print key environment variables
   log                Tail the latest colcon build log
 
 Robot:
-  sim   [--rviz] [--dlio] [--scene <file>]  Launch MuJoCo simulation
+  sim   [--rviz] [--dlio] [--scene <file>] [launch args...]  Launch MuJoCo simulation
                      scenes: scene.xml (default), scene_flat.xml, scene_terrain.xml,
                              scene_obstacles.xml, scene_maze.xml, scene_test_meshes.xml
   walk               Command robot to walk    (mode=4)
@@ -110,7 +111,7 @@ case "$CMD" in
         exit 1
         ;;
     build)
-        (cd "$WORKSPACE_DIR" && bash scripts/build_workspace.sh "${ARGS[1]:-}")
+        (cd "$WORKSPACE_DIR" && bash scripts/build_workspace.sh "${ARGS[@]:1}")
         ;;
     clean)
         if $YES; then
@@ -143,7 +144,7 @@ case "$CMD" in
     sim)
         SIM_ARGS=(rviz:=$RVIZ dlio:=$DLIO)
         [ -n "$SCENE" ] && SIM_ARGS+=(scene:="$SCENE")
-        ros2 launch a2_ros sim.launch.py "${SIM_ARGS[@]}"
+        ros2 launch a2_ros sim.launch.py "${SIM_ARGS[@]}" "${ARGS[@]:1}"
         ;;
     walk)
         _set_mode 4
@@ -169,15 +170,15 @@ case "$CMD" in
         ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args "${KB_ARGS[@]}"
         ;;
     nav)
-        ros2 launch a2_ros navigation.launch.py rviz:=$RVIZ
+        ros2 launch a2_ros navigation.launch.py rviz:=$RVIZ "${ARGS[@]:1}"
         ;;
     explore)
-        ros2 launch a2_ros exploration.launch.py rviz:=$RVIZ
+        ros2 launch a2_ros exploration.launch.py rviz:=$RVIZ "${ARGS[@]:1}"
         ;;
     dlio)
         DLIO_ARGS=(rviz:=$RVIZ)
         [ "$A2_MODE" = "sim" ] && DLIO_ARGS+=(use_sim_time:=true)
-        ros2 launch a2_ros dlio.launch.py "${DLIO_ARGS[@]}"
+        ros2 launch a2_ros dlio.launch.py "${DLIO_ARGS[@]}" "${ARGS[@]:1}"
         ;;
     detect)
         # Object detection (YOLO, runs on CPU). Use the real-robot launch on hardware.
