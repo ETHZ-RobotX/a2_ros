@@ -175,9 +175,6 @@ def generate_launch_description():
             executable='pathFollower',
             name='pathFollower',
             output='screen',
-            remappings=[
-                ('/nav_vel_cmd', '/nav_vel'),  # feed twist_mux's nav input (prio 10)
-            ],
             parameters=[{
                 'sensorOffsetX':    0.0,
                 'sensorOffsetY':    0.0,
@@ -209,7 +206,7 @@ def generate_launch_description():
                 'joyToSpeedDelay':  2.0,
             }],
         ),
-        
+
         # Node(
         #     package='a2_ros',
         #     executable='nav_vel_relay',
