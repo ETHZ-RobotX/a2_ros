@@ -7,6 +7,18 @@ x-common: &common
   # instead of the 64 MB default. Required for Zenoh shared-memory transport
   # (many sim nodes pushing point clouds/images would otherwise hit OS error 12).
   ipc: host
+  # Privileged so the container gets host device access (e.g. the joystick at
+  # /dev/input) without bind-mounting Linux-only paths. This keeps startup
+  # working on macOS (no /dev/input there) and on Linux whether or not a
+  # controller is plugged in. Overrides the non-privileged x-common default.
+  privileged: true
+  # Allow the Zenoh SHM watchdog threads to set real-time scheduling priority
+  # (otherwise they warn "error setting scheduling priority OS(1)") and lock
+  # the SHM pools into memory.
+  ulimits:
+    rtprio: 99
+    nice: -20
+    memlock: -1
   environment:
     # Linux: inherits the host's DISPLAY (e.g. :0) for native X11 forwarding
     # through the bind-mounted /tmp/.X11-unix. macOS/Windows: the host has no X
@@ -45,7 +57,6 @@ x-vol-bags: &vol-bags
   target: /a2_ros_ws/bags
 
 services:
-
   a2_ros_dev:
     <<: *common
     image: a2_ros:dev
@@ -63,18 +74,6 @@ services:
         - type=inline
     depends_on:
       - zenoh_router_sim
-    # Privileged so the container gets host device access (e.g. the joystick at
-    # /dev/input) without bind-mounting Linux-only paths. This keeps startup
-    # working on macOS (no /dev/input there) and on Linux whether or not a
-    # controller is plugged in. Overrides the non-privileged x-common default.
-    privileged: true
-    # Allow the Zenoh SHM watchdog threads to set real-time scheduling priority
-    # (otherwise they warn "error setting scheduling priority OS(1)") and lock
-    # the SHM pools into memory.
-    ulimits:
-      rtprio: 99
-      nice: -20
-      memlock: -1
     volumes:
       - *vol-x11
       - *vol-xauth

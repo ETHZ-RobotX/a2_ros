@@ -1,6 +1,9 @@
 # Git
 # .git/
 
+# Build outputs / release archives
+dist/
+
 # Python venv
 .venv/
 
