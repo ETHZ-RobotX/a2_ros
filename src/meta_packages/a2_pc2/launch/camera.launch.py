@@ -53,6 +53,11 @@ def generate_launch_description():
                 'camera_name':     LaunchConfiguration('camera_name'),
                 'image_encoding':  'rgb8',
                 'camera_info_url': LaunchConfiguration('camera_info_url'),
+                # Must match the camera optical frame in a2.urdf so the
+                # lidar->camera TF lookup in object_detection resolves.
+                # gscam2 otherwise defaults frame_id to "camera_frame",
+                # which is not in the robot's TF tree.
+                'frame_id':        'front_camera_optical_frame',
             }],
             remappings=[
                 ('image_raw', 'camera/image_raw'),
