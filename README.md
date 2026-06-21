@@ -101,9 +101,14 @@ Hardware-conditional dependencies are handled at the stack level: `hesai_ros_dri
 
 **Typical workflow:** build the meta package for your target, then use `a2` commands:
 ```bash
-colcon build --packages-up-to a2_robot   # real robot
-# or
-colcon build --packages-up-to a2_sim_full  # simulation with perception
+a2 build a2_robot        # real robot
+a2 build a2_sim_full     # simulation with perception
+```
+
+Extra flags are forwarded to `colcon build`, so you can override defaults:
+```bash
+a2 build a2_sim --executor sequential   # single-threaded build (easier to read errors)
+a2 build a2_sim --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 ```
 
 ## 🚀 Launching Subsystems
@@ -117,6 +122,12 @@ All launch files live in `a2_ros`. Use the `a2` CLI to invoke them:
 | `a2 explore [--rviz]` | `exploration.launch.py` | Autonomous exploration (TARE planner) |
 | `a2 dlio [--rviz]` | `dlio.launch.py` | DLIO LiDAR-inertial odometry |
 | `a2 detect` | `object_detection.launch.py` | Object detection (ONNX Runtime); uses `object_detection_real.launch.py` on the robot |
+
+Any extra positional arguments after the flags are forwarded to `ros2 launch` verbatim, so you can pass ROS launch arguments directly:
+```bash
+a2 sim use_sim_time:=false
+a2 nav --rviz map:=/path/to/map.yaml
+```
 
 **`a2 sim` options:**
 - `--rviz` — also open RViz.
