@@ -85,7 +85,7 @@ RUN echo "[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> /home/$USER/.bashrc && \
 # - log-base: set via COLCON_LOG_PATH (a global colcon arg, not expressible per-verb)
 ENV A2_WS_ROOT=/a2_ros_ws
 ENV COLCON_LOG_PATH=/a2_ros_ws/log
-RUN mkdir -p /a2_ros /a2_ros_ws/build /a2_ros_ws/install /a2_ros_ws/log && \
+RUN mkdir -p /a2_ros /a2_ros/bags /a2_ros_ws/build /a2_ros_ws/install /a2_ros_ws/log && \
     chown -R $USER:$USER /a2_ros_ws /a2_ros
 WORKDIR /a2_ros
 
