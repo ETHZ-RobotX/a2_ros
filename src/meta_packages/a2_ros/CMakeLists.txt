@@ -68,11 +68,21 @@ ament_target_dependencies(scan_pose_sync
   geometry_msgs
 )
 
+add_executable(scripted_walk
+  src/scripted_walk.cpp
+)
+ament_target_dependencies(scripted_walk
+  rclcpp
+  geometry_msgs
+  a2_interfaces
+)
+
 install(TARGETS
   stand_example
   teleop_joy
   nav_vel_relay
   scan_pose_sync
+  scripted_walk
   DESTINATION lib/${PROJECT_NAME}
 )
 
