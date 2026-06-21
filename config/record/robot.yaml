@@ -1,9 +1,26 @@
-# Low-level robot state: joint feedback, IMU, and sport mode telemetry.
 topics:
+  # Lidar
+  - /front_lidar/points
+  - /front_lidar/imu
+  - /front_lidar/ptp
+  # Robot state
   - /lowstate
   - /sportmodestate
-  - /imu/data
   - /joint_states
+  - /imu/data
   - /a2/mode
   - /a2/sport_mode
   - /odom
+  - /robot_description
+  - /diagnostics
+  - /rosout
+  # Commands
+  - /cmd_vel
+  - /joy
+  - /joy_vel
+  # Transforms
+  - /tf
+  - /tf_static
+  # Camera
+  - /camera/image/compressed
+  - /camera/camera_info
