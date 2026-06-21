@@ -25,6 +25,7 @@ def generate_launch_description():
     a2_ros_dir = get_package_share_directory('a2_ros')
 
     a2_params = os.path.join(a2_ros_dir, 'config', 'resple', 'params_a2.yaml')
+    rviz_config = os.path.join(a2_ros_dir, 'rviz', 'resple.rviz')
 
     rviz = LaunchConfiguration('rviz')
     map_saving_node = LaunchConfiguration('map_saving_node')
@@ -40,9 +41,6 @@ def generate_launch_description():
             emulate_tty=True,
             output='both',
             parameters=[a2_params],
-            remappings=[
-                ('current_scan', '/registered_scan'),
-            ],
             arguments=['--ros-args', '--log-level', 'INFO'],
         ),
 
@@ -53,9 +51,6 @@ def generate_launch_description():
             emulate_tty=True,
             output='both',
             parameters=[a2_params],
-            remappings=[
-                ('odometry', '/state_estimation'),
-            ],
             arguments=['--ros-args', '--log-level', 'INFO'],
         ),
 
@@ -79,13 +74,13 @@ def generate_launch_description():
         ),
 
         # RESPLE "body" is the IMU/lidar frame, rotated relative to the robot.
-        # This transform matches the DLIO baselink2lidar extrinsics (inverted).
+        # Connects resple TF tree (world -> body) to URDF tree (base_link -> ...).
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             name='body_to_base_link_tf',
             arguments=['0', '-0.08134', '-0.33767',
-                        '0.5', '0.5', '0.5', '-0.5',
+                        '-1.5708', '-1.5708', '0',
                         'body', 'base_link'],
         ),
 
@@ -93,7 +88,7 @@ def generate_launch_description():
             package='rviz2',
             executable='rviz2',
             name='rviz2',
-            arguments=['--ros-args', '--log-level', 'WARN'],
+            arguments=['-d', rviz_config, '--ros-args', '--log-level', 'WARN'],
             condition=IfCondition(rviz),
         ),
     ])
