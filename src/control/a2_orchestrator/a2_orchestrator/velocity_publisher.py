@@ -26,7 +26,7 @@ class VelocityPublisher(Node):
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = 'base_link'
         
-        msg.twist.linear.x = -0.5
+        msg.twist.linear.x = 0.5
         msg.twist.linear.y = 0.0
         msg.twist.angular.z = 0.0
         
@@ -35,6 +35,7 @@ class VelocityPublisher(Node):
         self.counter += 1
         if self.counter >= 100:
             self.get_logger().info("Published 100 messages (2 seconds elapsed). Stopping node.")
+            raise SystemExit
 
 def main(args=None):
     rclpy.init(args=args)
