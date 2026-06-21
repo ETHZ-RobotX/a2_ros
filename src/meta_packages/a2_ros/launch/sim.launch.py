@@ -5,10 +5,10 @@ Starts:
   - a2_mujoco            : MuJoCo physics simulator (publishes /lowstate, subscribes /lowcmd)
   - locomotion_controller: RL policy node (subscribes /lowstate + /mode + /cmd_vel,
                                             publishes /lowcmd)
-  - a2_bridge            : republishes /lowstate as /joint_states, /imu/data, /odom, /state_estimation; broadcasts TF
-  - registered_scan_pub  : transforms /mujoco/front_lidar into map frame → /registered_scan
+  - a2_bridge            : republishes /lowstate as /joint_states, /imu/data, /odom, /state_estimation;
+                           transforms /front_lidar/points into map frame → /registered_scan; broadcasts TF
   - joy_node             : reads gamepad from /dev/input/js0
-  - teleop_joy           : maps gamepad axes/buttons to /cmd_vel and /mode
+  - teleop_joy           : maps gamepad axes/buttons to /joy_vel (via twist_mux) and /a2/mode
 
 Arguments:
   dlio:=false  (default) — a2_bridge broadcasts ground-truth map→base_link TF.
@@ -16,7 +16,7 @@ Arguments:
                            odometry, TF, and registered_scan come from DLIO.
                            Launch DLIO separately in another terminal:
                              ros2 launch direct_lidar_inertial_odometry a2_front_live_rss.launch.py \
-                               pointcloud_topic:=/mujoco/front_lidar use_sim_time:=true
+                               pointcloud_topic:=/front_lidar/points use_sim_time:=true
 
 Optional (pass rviz:=true):
   - robot_state_publisher: broadcasts TF from URDF
@@ -118,6 +118,7 @@ def generate_launch_description():
             'dev': '/dev/input/js0',
             'deadzone': 0.05,
             'autorepeat_rate': 500.0,
+            'use_sim_time': True,
         }]
     )
 
@@ -129,6 +130,7 @@ def generate_launch_description():
             'linear_x_limit':  0.5,
             'linear_y_limit':  0.5,
             'angular_z_limit': 1.0,
+            'use_sim_time': True,
         }]
     )
 
@@ -152,7 +154,7 @@ def generate_launch_description():
             remappings={('/cmd_vel_out', '/cmd_vel')},
         parameters=[
             os.path.join(a2_ros_dir, 'config', 'twist_mux_config.yaml'),
-            {'use_sim_time': False},
+            {'use_sim_time': True},
         ]
     )
 

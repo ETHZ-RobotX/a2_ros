@@ -4,7 +4,7 @@ PC2 launch.
 Starts:
   - a2_unitree_bridge  : bridge node (publishes /joint_states and /imu/data from hardware)
   - joy_node           : reads gamepad from /dev/input/js0
-  - teleop_joy         : maps gamepad axes/buttons to /cmd_vel and /a2/mode (FSM)
+  - teleop_joy         : maps gamepad axes/buttons to /joy_vel (via twist_mux) and /a2/mode (FSM)
   - gscam2             : H.264 multicast camera stream
 
 Usage:

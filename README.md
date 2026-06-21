@@ -179,7 +179,7 @@ The layout contains:
 
 | Panel | Shows |
 |---|---|
-| **3D** | Robot model + TF, front/rear lidar (`/mujoco/front_lidar`, `/mujoco/rear_lidar`), `/registered_scan`, terrain maps, navigation paths/goals, and TARE exploration markers |
+| **3D** | Robot model + TF, front/rear lidar (`/front_lidar/points`, `/rear_lidar/points`), `/registered_scan`, terrain maps, navigation paths/goals, and TARE exploration markers |
 | **Image** | `/camera/image_raw` with object-detection overlays (`/detection_annotations`, `/detections_in_image`) |
 | **Transform Tree** | Live TF tree |
 | **Joystick** | Live gamepad input |

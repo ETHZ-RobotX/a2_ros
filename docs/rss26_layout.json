@@ -37,15 +37,15 @@
         "/object_markers": {
           "visible": false
         },
-        "/mujoco/front_lidar": {
+        "/front_lidar/points": {
           "visible": true,
           "colorField": "z",
           "colorMode": "colormap",
           "colorMap": "turbo",
           "pointShape": "square",
-          "pointSize": 5
+          "pointSize": 2
         },
-        "/mujoco/rear_lidar": {
+        "/rear_lidar/points": {
           "visible": true,
           "colorField": "z",
           "colorMode": "colormap",
@@ -73,13 +73,12 @@
         }
       }
     },
-    "joy-panel.Joystick!3iu9gaj": {},
     "TransformTree!3vby04c": {},
     "3D!2pec5ki": {
       "cameraState": {
-        "distance": 4.518710819838418,
+        "distance": 3.8742296891588173,
         "perspective": true,
-        "phi": 63.652231198663124,
+        "phi": 63.652231198663884,
         "target": [
           0,
           0,
@@ -96,7 +95,7 @@
           0,
           1
         ],
-        "thetaOffset": 55.858117298643734,
+        "thetaOffset": 55.858117298645084,
         "fovy": 45,
         "near": 0.5,
         "far": 5000
@@ -120,7 +119,7 @@
             }
           }
         },
-        "/mujoco/front_lidar": {
+        "/front_lidar/points": {
           "visible": true,
           "colorField": "z",
           "colorMode": "flat",
@@ -129,7 +128,7 @@
           "pointSize": 3,
           "flatColor": "#fda7795c"
         },
-        "/mujoco/rear_lidar": {
+        "/rear_lidar/points": {
           "visible": true,
           "colorField": "z",
           "colorMode": "flat",
@@ -254,20 +253,19 @@
       },
       "publish": {
         "type": "point",
-        "poseTopic": "",
+        "poseTopic": "/move_base_simple/goal",
         "pointTopic": "/goal_point",
-        "poseEstimateTopic": "",
+        "poseEstimateTopic": "/initialpose",
         "poseEstimateXDeviation": 0.5,
         "poseEstimateYDeviation": 0.5,
         "poseEstimateThetaDeviation": 0.26179939
       },
       "synchronize": false,
-      "imageMode": {},
-      "fixedFrame": "map"
+      "imageMode": {}
     },
     "3D!pdae5d": {
       "cameraState": {
-        "distance": 10.266841665580953,
+        "distance": 10.266841665580905,
         "perspective": false,
         "phi": 49.604422919063325,
         "target": [
@@ -276,9 +274,9 @@
           0
         ],
         "targetOffset": [
-          2.714043842525548,
-          -0.6684737376347758,
-          -8.857064000488742e-17
+          -1.3264495235642493,
+          -1.0130428964500455,
+          7.22308913842772e-17
         ],
         "targetOrientation": [
           0,
@@ -286,7 +284,7 @@
           0,
           1
         ],
-        "thetaOffset": 76.20736698382639,
+        "thetaOffset": 76.20736698382676,
         "fovy": 45,
         "near": 0.5,
         "far": 5000
@@ -303,7 +301,7 @@
         "/robot_description": {
           "visible": true
         },
-        "/mujoco/front_lidar": {
+        "/front_lidar/points": {
           "visible": false,
           "colorField": "z",
           "colorMode": "flat",
@@ -312,7 +310,7 @@
           "pointSize": 3,
           "flatColor": "#f4f2f724"
         },
-        "/mujoco/rear_lidar": {
+        "/rear_lidar/points": {
           "visible": false,
           "colorField": "z",
           "colorMode": "colormap",
@@ -466,6 +464,27 @@
         },
         "/to_nearest_global_subspace_path": {
           "visible": false
+        },
+        "/dlio/odom_node/pointcloud/deskewed": {
+          "visible": true,
+          "colorField": "z",
+          "colorMode": "colormap",
+          "colorMap": "turbo"
+        },
+        "/dlio/odom_node/pointcloud/deskewed_not_transformed": {
+          "visible": false,
+          "colorField": "z",
+          "colorMode": "colormap",
+          "colorMap": "turbo"
+        },
+        "/dlio/odom_node/pointcloud/dynamic_removed": {
+          "visible": false
+        },
+        "/dlio/odom_node/pointcloud/keyframe": {
+          "visible": false
+        },
+        "/dlio/odom_node/pose": {
+          "visible": false
         }
       },
       "layers": {
@@ -493,9 +512,9 @@
       },
       "publish": {
         "type": "point",
-        "poseTopic": "",
+        "poseTopic": "/move_base_simple/goal",
         "pointTopic": "/goal_point",
-        "poseEstimateTopic": "",
+        "poseEstimateTopic": "/initialpose",
         "poseEstimateXDeviation": 0.5,
         "poseEstimateYDeviation": 0.5,
         "poseEstimateThetaDeviation": 0.26179939
@@ -514,13 +533,9 @@
   "layout": {
     "first": {
       "first": "Image!uejlbg",
-      "second": {
-        "first": "joy-panel.Joystick!3iu9gaj",
-        "second": "TransformTree!3vby04c",
-        "direction": "row"
-      },
+      "second": "TransformTree!3vby04c",
       "direction": "row",
-      "splitPercentage": 34.42534908700322
+      "splitPercentage": 50
     },
     "second": {
       "first": "3D!2pec5ki",

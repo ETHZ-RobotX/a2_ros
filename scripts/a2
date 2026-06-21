@@ -161,10 +161,11 @@ case "$CMD" in
         _set_mode 1
         ;;
     keyboard)
-        # Keyboard teleop -> /cmd_vel. The stack expects TwistStamped, so publish
-        # stamped; in sim align timestamps with /clock so they aren't dropped as
-        # stale. Robot must already be in walk mode (a2 walk) to actually move.
-        KB_ARGS=(-p stamped:=true)
+        # Keyboard teleop -> twist_mux's key_vel input (prio 90), which the mux
+        # forwards to /cmd_vel. The stack expects TwistStamped, so publish stamped;
+        # in sim align timestamps with /clock so they aren't dropped as stale.
+        # Robot must already be in walk mode (a2 walk) to actually move.
+        KB_ARGS=(-p stamped:=true -r cmd_vel:=/key_vel)
         [ "$A2_MODE" = "sim" ] && KB_ARGS+=(-p use_sim_time:=true)
         ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args "${KB_ARGS[@]}"
         ;;
