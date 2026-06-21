@@ -22,7 +22,7 @@ def generate_launch_description():
         "! rtph264depay ! h264parse ! avdec_h264 "
         "! videoconvert "
         f"! videorate ! video/x-raw,framerate={_FRAME_RATE}/1 "
-        f"! videoscale ! video/x-raw,format=BGR,width={_WIDTH},height={_HEIGHT} "
+        f"! videoscale ! video/x-raw,format=RGB,width={_WIDTH},height={_HEIGHT} "
     )
 
     return LaunchDescription([
@@ -51,7 +51,7 @@ def generate_launch_description():
             parameters=[{
                 'gscam_config':    LaunchConfiguration('gscam_config'),
                 'camera_name':     LaunchConfiguration('camera_name'),
-                'image_encoding':  'bgr8',
+                'image_encoding':  'rgb8',
                 'camera_info_url': LaunchConfiguration('camera_info_url'),
             }],
             remappings=[
