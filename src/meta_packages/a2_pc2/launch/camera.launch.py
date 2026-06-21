@@ -3,10 +3,9 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-# Resize resolution — match your detection model's input to minimise bandwidth.
-# At 640×640, JPEG q=60 is ~5–8 Mbps at 20 Hz (vs ~200+ Mbps raw).
-_WIDTH = 640
-_HEIGHT = 640
+# Scale so the longest side is 640; videoscale preserves aspect ratio when
+# only width is constrained (height is auto-calculated).
+_MAX_SIDE = 640
 _JPEG_QUALITY = 60  # 50–70 works well for YOLO; lower = smaller frames
 _FRAME_RATE = 5
 
@@ -24,7 +23,7 @@ def generate_launch_description():
         "! rtph264depay ! h264parse ! avdec_h264 "
         "! videoconvert "
         f"! videorate ! video/x-raw,framerate={_FRAME_RATE}/1 "
-        f"! videoscale ! video/x-raw,format=I420,width={_WIDTH},height={_HEIGHT} "
+        f"! videoscale ! video/x-raw,format=I420,width={_MAX_SIDE} "
         f"! jpegenc quality={_JPEG_QUALITY} "
         "! image/jpeg"
     )
