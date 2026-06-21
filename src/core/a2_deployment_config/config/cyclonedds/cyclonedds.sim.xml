@@ -1,10 +1,36 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
+  <!--
+    Used by the Unitree SDK's CycloneDDS inside a2_unitree_bridge (the sim
+    subscriber). It reads CYCLONEDDS_URI even when the ROS RMW is Zenoh, so this
+    file is exported in setup_zenoh.sh as well as setup_cyclonedds.sh.
+
+    The large-message tuning (MaxMessageSize / SocketReceiveBufferSize / WhcHigh)
+    mirrors the inline config the publisher forces in
+    external/unitree_mujoco/simulate/src/main.cc — keep the two in sync. Without
+    it, the front lidar PointCloud2 (~46k points) is dropped over loopback while
+    small samples like lowstate get through.
+  -->
   <Domain>
     <General>
       <Interfaces>
         <NetworkInterface name="lo" priority="default" multicast="default" />
       </Interfaces>
+      <AllowMulticast>default</AllowMulticast>
+      <!-- Fragment large samples at the DDS layer (<64KB datagrams) instead of
+           relying on IP fragmentation. -->
+      <MaxMessageSize>65500B</MaxMessageSize>
     </General>
+    <Internal>
+      <!-- Absorb bursts of fragments. Capped by net.core.rmem_max — raise it via
+           scripts/setup/setup-network-host.sh for the full 10MB to be granted. -->
+      <SocketReceiveBufferSize min="10MB"/>
+      <Watermarks>
+        <WhcHigh>500kB</WhcHigh>
+      </Watermarks>
+    </Internal>
+    <!-- Match the publisher: shared memory off to avoid Iceoryx conflicts/crashes. -->
+    <Iceoryx><Enable>false</Enable></Iceoryx>
+    <SharedMemory><Enable>false</Enable></SharedMemory>
   </Domain>
 </CycloneDDS>

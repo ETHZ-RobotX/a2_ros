@@ -39,13 +39,15 @@ Usage: a2 <command> [options]
 
 Workspace:
   source             Source the ROS/workspace environment (same as running a2)
-  build [package]    Build the workspace, or up to a specific package
+  build [package] [-j N]  Build the workspace, or up to a specific package
+                     (-j/--jobs sets parallel workers; default is half the cores)
   clean [--yes]      Remove build/install/log artifacts (--yes skips confirmation)
   env                Print key environment variables
   log                Tail the latest colcon build log
 
 Robot:
-  sim   [--rviz] [--dlio] [--scene <file>]  Launch MuJoCo simulation
+  sim   [--rviz] [--dlio] [--headless] [--scene <file>]  Launch MuJoCo simulation
+                     --headless runs with no MuJoCo viewer (visualize in RViz/Foxglove)
                      scenes: scene.xml (default), scene_flat.xml, scene_terrain.xml,
                              scene_obstacles.xml, scene_maze.xml, scene_test_meshes.xml
   walk               Command robot to walk    (mode=4)
@@ -82,14 +84,21 @@ EOF
 # Separate flags from positional args
 RVIZ=false
 DLIO=false
+HEADLESS=false
 YES=false
 SCENE=""
+JOBS=""
 ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --rviz) RVIZ=true; shift ;;
         --dlio) DLIO=true; shift ;;
+        --headless) HEADLESS=true; shift ;;
         --yes)  YES=true; shift ;;
+        -j|--jobs)
+            if [[ -z "${2:-}" ]]; then error "$1 requires a value (e.g. -j 8)"; exit 1; fi
+            JOBS="$2"; shift 2 ;;
+        -j=*|--jobs=*) JOBS="${1#*=}"; shift ;;
         --scene)
             if [[ -z "${2:-}" ]]; then error "--scene requires a value (e.g. scene_maze.xml)"; exit 1; fi
             SCENE="$2"; shift 2 ;;
@@ -110,7 +119,8 @@ case "$CMD" in
         exit 1
         ;;
     build)
-        (cd "$WORKSPACE_DIR" && bash scripts/build_workspace.sh "${ARGS[1]:-}")
+        # -j/--jobs overrides the worker count; build_workspace.sh reads A2_BUILD_JOBS.
+        (cd "$WORKSPACE_DIR" && A2_BUILD_JOBS="${JOBS:-$A2_BUILD_JOBS}" bash scripts/build_workspace.sh "${ARGS[1]:-}")
         ;;
     clean)
         if $YES; then
@@ -141,7 +151,7 @@ case "$CMD" in
         tail -f "$LATEST"
         ;;
     sim)
-        SIM_ARGS=(rviz:=$RVIZ dlio:=$DLIO)
+        SIM_ARGS=(rviz:=$RVIZ dlio:=$DLIO headless:=$HEADLESS)
         [ -n "$SCENE" ] && SIM_ARGS+=(scene:="$SCENE")
         ros2 launch a2_ros sim.launch.py "${SIM_ARGS[@]}"
         ;;

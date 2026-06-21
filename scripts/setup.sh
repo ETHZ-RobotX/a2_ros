@@ -34,6 +34,24 @@ if [ "$A2_MODE" = "sim" ]; then
         ln -sf "$MUJOCO_DIR" "$MUJOCO_SYMLINK"
         echo "[a2_ros] Created MuJoCo symlink: $MUJOCO_SYMLINK -> $MUJOCO_DIR"
     fi
+
+    # The MuJoCo front-lidar PointCloud2 (~46k pts) rides Unitree CycloneDDS over
+    # loopback; reassembling it needs a big socket RX buffer (the cyclonedds config
+    # requests 10MB), which the kernel caps at net.core.rmem_max (~208KB default).
+    # The container is privileged, so raise the cap here. Idempotent — only acts
+    # when below target, so the sudo call runs at most once per (VM) boot. On the
+    # Mac/Docker-Desktop VM the value resets on Docker restart; a fresh shell
+    # re-applies it. Robot (A2_MODE=robot) is skipped — host tuning handles it.
+    _RMEM_TARGET=2147483647
+    _RMEM_NOW="$(cat /proc/sys/net/core/rmem_max 2>/dev/null || echo 0)"
+    if [ "${_RMEM_NOW:-0}" -lt "$_RMEM_TARGET" ]; then
+        if sudo -n sysctl -w net.core.rmem_max=$_RMEM_TARGET >/dev/null 2>&1; then
+            echo "[a2_ros] Raised net.core.rmem_max=$_RMEM_TARGET (sim lidar over DDS)."
+        else
+            warn "Could not raise net.core.rmem_max (passwordless sudo unavailable)."
+            warn "  Sim lidar /front_lidar/points may drop. Fix: sudo sysctl -w net.core.rmem_max=$_RMEM_TARGET"
+        fi
+    fi
 fi
 
 # --- ROS2 middleware (controlled by RMW_IMPLEMENTATION in .env) ---

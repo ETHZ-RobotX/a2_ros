@@ -37,6 +37,13 @@ fi
 
 export RMW_IMPLEMENTATION=rmw_zenoh_cpp
 
+# The Unitree SDK bridge (a2_unitree_bridge) talks to the MuJoCo sim / robot over
+# Unitree's own CycloneDDS regardless of the ROS RMW. Point its CycloneDDS at the
+# tuned profile so large samples (e.g. the front lidar PointCloud2) fragment and
+# buffer correctly. rmw_zenoh ignores CYCLONEDDS_URI, so this is safe under Zenoh.
+DEPLOYMENT_CONFIG_DIR="$(dirname "$SCRIPT_DIR")"
+export CYCLONEDDS_URI="${DEPLOYMENT_CONFIG_DIR}/config/cyclonedds/cyclonedds.${ZENOH_PROFILE}.xml"
+
 # Isolate the Zenoh (sim) network on its own ROS domain. Override in .env if needed.
 export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-30}"
 

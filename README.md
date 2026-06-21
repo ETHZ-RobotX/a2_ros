@@ -112,7 +112,7 @@ All launch files live in `a2_ros`. Use the `a2` CLI to invoke them:
 
 | Command | Launch file | Description |
 |---|---|---|
-| `a2 sim [--rviz] [--dlio] [--scene <file>]` | `sim.launch.py` | MuJoCo simulation + locomotion controller |
+| `a2 sim [--rviz] [--dlio] [--headless] [--scene <file>]` | `sim.launch.py` | MuJoCo simulation + locomotion controller |
 | `a2 nav [--rviz]` | `navigation.launch.py` | CMU navigation stack (terrain analysis + path planner) |
 | `a2 explore [--rviz]` | `exploration.launch.py` | Autonomous exploration (TARE planner) |
 | `a2 dlio [--rviz]` | `dlio.launch.py` | DLIO LiDAR-inertial odometry |
@@ -121,6 +121,7 @@ All launch files live in `a2_ros`. Use the `a2` CLI to invoke them:
 **`a2 sim` options:**
 - `--rviz` — also open RViz.
 - `--dlio` — use DLIO for odometry instead of ground-truth TF (run `a2 dlio` in another terminal).
+- `--headless` — run MuJoCo with no viewer window; visualize in RViz/Foxglove. LiDAR and the RGB camera still render (camera via offscreen EGL). Needs no X server/VNC — useful on macOS/Windows or over SSH.
 - `--scene <file>` — pick the MuJoCo scene: `scene.xml` (default), `scene_flat.xml`, `scene_terrain.xml`, `scene_obstacles.xml`, `scene_maze.xml`, `scene_test_meshes.xml`.
 
 > Running on the second compute unit (**pc2**)? Its setup and launch live in [`docs/pc2.md`](docs/pc2.md).

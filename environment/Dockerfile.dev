@@ -115,6 +115,12 @@ USER root
 ENV MUJOCO_DIR=/opt/mujoco/mujoco-${MUJOCO_VERSION}
 COPY --from=mujoco-builder /opt/mujoco /opt/mujoco
 RUN ln -sf $MUJOCO_DIR external/unitree_mujoco/simulate/mujoco
+
+# Let setup.sh raise net.core.rmem_max unattended (for the sim lidar's large
+# PointCloud2 over Unitree CycloneDDS) without a sudo password prompt. Dev-only and
+# scoped to sysctl; the robot relies on host-level sysctl tuning instead.
+RUN echo "$USER ALL=(root) NOPASSWD: /usr/sbin/sysctl, /sbin/sysctl" \
+      > /etc/sudoers.d/a2-net-tune && chmod 440 /etc/sudoers.d/a2-net-tune
 USER $USER
 
 # Set default package manifest for simulation

@@ -26,6 +26,7 @@ Usage:
   ros2 launch a2_ros sim.launch.py
   ros2 launch a2_ros sim.launch.py dlio:=true
   ros2 launch a2_ros sim.launch.py rviz:=true scene:=scene_terrain.xml
+  ros2 launch a2_ros sim.launch.py headless:=true   # no MuJoCo viewer
 """
 
 import os
@@ -61,6 +62,12 @@ def generate_launch_description():
         description='Use DLIO for odometry instead of ground-truth TF from a2_bridge. '
                     'Run `a2 --dlio` in a separate terminal when using this flag.'
     )
+    headless_arg = DeclareLaunchArgument(
+        'headless',
+        default_value='false',
+        description='Run MuJoCo with no viewer (no GUI/GL/display) — visualise in '
+                    'RViz/Foxglove instead. Needs no X server / VNC.'
+    )
 
     scene_path = PathJoinSubstitution([description_dir, 'mjcf', LaunchConfiguration('scene')])
     mjcf_dir   = os.path.join(description_dir, 'mjcf')
@@ -76,6 +83,9 @@ def generate_launch_description():
         output='screen',
         arguments=['-s', scene_path],
         cwd=mjcf_dir,
+        # The simulator reads UNITREE_MUJOCO_HEADLESS (accepts '1'/'true') to skip
+        # the viewer entirely; pass the launch arg straight through.
+        additional_env={'UNITREE_MUJOCO_HEADLESS': LaunchConfiguration('headless')},
     )
 
     locomotion_node = Node(
@@ -172,6 +182,7 @@ def generate_launch_description():
         scene_arg,
         rviz_arg,
         dlio_arg,
+        headless_arg,
         mujoco_node,
         locomotion_node,
         a2_bridge_node,
