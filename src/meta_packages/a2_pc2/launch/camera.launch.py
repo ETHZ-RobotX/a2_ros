@@ -12,7 +12,7 @@ _JPEG_QUALITY = 60
 def generate_launch_description():
 
     camera_info_url = (
-        'package://a2_description/config/camera_info.yaml'
+        'package://a2_description/config/camera_info_real.yaml'
     )
 
     gscam_config = (
