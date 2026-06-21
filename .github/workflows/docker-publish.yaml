@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
-          token: ${{ secrets.SUBMODULE_PAT }}
+          token: ${{ secrets.SUBMODULE_PAT || github.token }}
 
       # Log in to Docker Hub — required to access the Docker Build Cloud builder
       # (separate from the GHCR login below, which is only for pushing the image).
