@@ -101,7 +101,6 @@ services:
   # via the a2_ros_pc2 service on pc2 instead.
   a2_ros_nuc:
     <<: *common
-    image: a2_ros:robot
     build:
       context: .
       dockerfile: ./environment/Dockerfile.dev
