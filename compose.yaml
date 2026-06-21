@@ -57,6 +57,10 @@ x-vol-bags: &vol-bags
   target: /a2_ros_ws/bags
 
 services:
+  a2_base:
+    image: ghcr.io/ethz-robotx/a2_ros/a2_base:main
+    pull_policy: always
+    entrypoint: ["true"]
   a2_ros_dev:
     <<: *common
     image: a2_ros:dev
@@ -68,12 +72,9 @@ services:
         UID: ${HOST_UID:-1000}
         GID: ${HOST_GID:-1000}
         INPUT_GID: ${INPUT_GID:-107}
-      cache_from:
-        - a2_ros:dev
-      cache_to:
-        - type=inline
     depends_on:
       - zenoh_router_sim
+      - a2_base
     volumes:
       - *vol-x11
       - *vol-xauth
@@ -109,10 +110,8 @@ services:
         UID: ${HOST_UID:-1000}
         GID: ${HOST_GID:-1000}
         INPUT_GID: ${INPUT_GID:-107}
-      cache_from:
-        - a2_ros:robot
-      cache_to:
-        - type=inline
+    depends_on:
+      - a2_base
     shm_size: '512m'
     volumes:
       - *vol-x11
