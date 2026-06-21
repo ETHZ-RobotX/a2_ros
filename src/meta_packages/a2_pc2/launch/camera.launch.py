@@ -3,11 +3,10 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-# Scale so the longest side is 640; videoscale preserves aspect ratio when
-# only width is constrained (height is auto-calculated).
-_MAX_SIDE = 640
-_JPEG_QUALITY = 60  # 50–70 works well for YOLO; lower = smaller frames
+_WIDTH = 640
+_HEIGHT = 360
 _FRAME_RATE = 5
+_JPEG_QUALITY = 60
 
 
 def generate_launch_description():
@@ -23,9 +22,7 @@ def generate_launch_description():
         "! rtph264depay ! h264parse ! avdec_h264 "
         "! videoconvert "
         f"! videorate ! video/x-raw,framerate={_FRAME_RATE}/1 "
-        f"! videoscale ! video/x-raw,format=I420,width={_MAX_SIDE} "
-        f"! jpegenc quality={_JPEG_QUALITY} "
-        "! image/jpeg"
+        f"! videoscale ! video/x-raw,format=BGR,width={_WIDTH},height={_HEIGHT} "
     )
 
     return LaunchDescription([
@@ -34,11 +31,6 @@ def generate_launch_description():
             'camera_name',
             default_value='camera',
             description='Camera namespace',
-        ),
-        DeclareLaunchArgument(
-            'image_encoding',
-            default_value='jpeg',
-            description='Image encoding passed to gscam2 — jpeg publishes CompressedImage on image_raw/compressed',
         ),
         DeclareLaunchArgument(
             'gscam_config',
@@ -59,13 +51,27 @@ def generate_launch_description():
             parameters=[{
                 'gscam_config':    LaunchConfiguration('gscam_config'),
                 'camera_name':     LaunchConfiguration('camera_name'),
-                'image_encoding':  LaunchConfiguration('image_encoding'),
+                'image_encoding':  'bgr8',
                 'camera_info_url': LaunchConfiguration('camera_info_url'),
             }],
             remappings=[
-                ('image_raw/compressed', 'camera/image/compressed'),
+                ('image_raw', 'camera/image_raw'),
                 ('camera_info', 'camera/camera_info'),
             ],
+        ),
+
+        Node(
+            package='image_transport',
+            executable='republish',
+            name='image_republish',
+            arguments=['raw', 'compressed'],
+            remappings=[
+                ('in', 'camera/image_raw'),
+                ('out/compressed', 'camera/image_raw/compressed'),
+            ],
+            parameters=[{
+                'jpeg_quality': _JPEG_QUALITY,
+            }],
         ),
 
     ])
