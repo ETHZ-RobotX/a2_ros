@@ -33,15 +33,16 @@ class VelocityPublisher(Node):
         self.publisher_.publish(msg)
         
         self.counter += 1
-        if self.counter % 100 == 0:
-            self.get_logger().info("Published 100 messages (2 seconds elapsed)...")
+        if self.counter >= 100:
+            self.get_logger().info("Published 100 messages (2 seconds elapsed). Stopping node.")
+            raise SystemExit
 
 def main(args=None):
     rclpy.init(args=args)
     node = VelocityPublisher()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         pass
     finally:
         node.destroy_node()
