@@ -22,8 +22,11 @@ def generate_launch_description():
         "! rtph264depay ! h264parse ! avdec_h264 "
         "! videoconvert "
         f"! videorate ! video/x-raw,framerate={_FRAME_RATE}/1 "
-        f"! videoscale ! video/x-raw,format=RGB,width={_WIDTH},height={_HEIGHT} "
+        f"! videoscale ! video/x-raw,width={_WIDTH},height={_HEIGHT} "
+        "! videoconvert "
     )
+
+    print(f"gscam_config: {gscam_config}")
 
     return LaunchDescription([
 
