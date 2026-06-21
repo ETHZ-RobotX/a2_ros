@@ -1,6 +1,0 @@
-# Record everything, dropping high-bandwidth streams that bloat bags.
-all: true
-ignore:
-  - /camera/image_raw
-  - /rgb_camera/undistorted
-  - /mujoco/front_camera_pointcloud
