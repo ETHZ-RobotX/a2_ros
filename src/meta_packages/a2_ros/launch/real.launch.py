@@ -71,7 +71,7 @@ def generate_launch_description():
         parameters=[{
             'dev': '/dev/input/js0',
             'deadzone': 0.05,
-            'autorepeat_rate': 500.0,
+            'autorepeat_rate': 50.0,
         }]
     )
 
