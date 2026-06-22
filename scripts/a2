@@ -41,6 +41,7 @@ _stack_pattern() {
         nav)         echo "navigation.launch.py" ;;
         explore)     echo "exploration.launch.py" ;;
         dlio)        echo "dlio.launch.py" ;;
+        resple)      echo "resple.launch.py" ;;
         detect)      echo "object_detection" ;;
         foxglove)    echo "foxglove_bridge" ;;
         plotjuggler) echo "run plotjuggler|/plotjuggler" ;;
@@ -112,6 +113,7 @@ Robot:
   nav   [--rviz]     Launch navigation stack
   explore [--rviz]   Launch autonomous exploration (TARE)
   dlio  [--rviz]     Launch DLIO LiDAR-inertial odometry
+  resple [--rviz]    Launch RESPLE LiDAR-inertial odometry
   detect             Launch object detection (YOLO, CPU); _real launch on robot
 
 Introspection:
@@ -129,8 +131,8 @@ Utilities:
   router             Start Zenoh router (foreground)
   verify             Verify MuJoCo installation
   ps                 List running managed stacks and their PIDs
-  down [stack]       Stop a running stack (sim|nav|explore|dlio|detect|foxglove|
-                     plotjuggler), or all of them if no stack is given
+  down [stack]       Stop a running stack (sim|nav|explore|dlio|resple|detect|
+                     foxglove|plotjuggler), or all of them if no stack is given
 
 Mode:      ${A2_MODE:-unknown}
 Workspace: $WORKSPACE_DIR
@@ -246,6 +248,11 @@ case "$CMD" in
         [ "$A2_MODE" = "sim" ] && DLIO_ARGS+=(use_sim_time:=true)
         _run dlio ros2 launch a2_ros dlio.launch.py "${DLIO_ARGS[@]}"
         ;;
+    resple)
+        RESPLE_ARGS=(rviz:=$RVIZ)
+        [ "$A2_MODE" = "sim" ] && RESPLE_ARGS+=(use_sim_time:=true)
+        _run resple ros2 launch a2_ros resple.launch.py "${RESPLE_ARGS[@]}"
+        ;;
     detect)
         # Object detection (YOLO, runs on CPU). Use the real-robot launch on hardware.
         if [ "$A2_MODE" = "robot" ]; then
@@ -310,7 +317,7 @@ case "$CMD" in
     ps)
         # Show which managed stacks are currently running, with their PIDs.
         FOUND=false
-        for s in sim nav explore dlio detect foxglove plotjuggler; do
+        for s in sim nav explore dlio resple detect foxglove plotjuggler; do
             PIDS="$(_stack_pids "$(_stack_pattern "$s")" | tr '\n' ' ')"
             if [[ -n "${PIDS// }" ]]; then
                 info "$(printf '%-12s' "$s") ${PIDS}"
@@ -327,7 +334,7 @@ case "$CMD" in
             PAT="$(_stack_pattern "$TARGET")" || { error "Unknown stack: $TARGET"; exit 1; }
             _kill_stale "$PAT"
         else
-            for s in sim nav explore dlio detect foxglove plotjuggler; do
+            for s in sim nav explore dlio resple detect foxglove plotjuggler; do
                 _kill_stale "$(_stack_pattern "$s")"
             done
         fi
