@@ -74,7 +74,6 @@ add_executable(scripted_walk
 ament_target_dependencies(scripted_walk
   rclcpp
   geometry_msgs
-  a2_interfaces
 )
 
 install(TARGETS

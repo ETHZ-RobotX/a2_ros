@@ -4,17 +4,8 @@
 #include <stdexcept>
 #include <string>
 
-#include <a2_interfaces/msg/operating_mode.hpp>
-#include <a2_interfaces/srv/set_operating_mode.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
-
-using namespace std::chrono_literals;
-
-namespace {
-using OperatingMode = a2_interfaces::msg::OperatingMode;
-using SetOperatingMode = a2_interfaces::srv::SetOperatingMode;
-}  // namespace
 
 class ScriptedWalk : public rclcpp::Node {
 public:
@@ -40,22 +31,11 @@ public:
     }
 
     cmd_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>(cmd_topic_, 10);
-    mode_client_ = create_client<SetOperatingMode>("/a2/set_mode");
   }
 
   bool run()
   {
-    if (!mode_client_->wait_for_service(5s)) {
-      RCLCPP_ERROR(get_logger(), "Service /a2/set_mode is not available");
-      return false;
-    }
-
-    if (!setMode(OperatingMode::STAND_UP) ||
-        !setMode(OperatingMode::BALANCE_STAND) ||
-        !setMode(OperatingMode::VELOCITY_MOVE)) {
-      return false;
-    }
-
+    RCLCPP_INFO(get_logger(), "Assuming robot is already in velocity move mode");
     RCLCPP_INFO(get_logger(), "Walking forward at %.3f m/s for %.3f s", speed_, duration_);
     publishVelocityFor(speed_, duration_);
 
@@ -72,34 +52,6 @@ public:
   }
 
 private:
-  bool setMode(uint8_t mode)
-  {
-    auto request = std::make_shared<SetOperatingMode::Request>();
-    request->mode = mode;
-
-    auto future = mode_client_->async_send_request(request);
-    if (rclcpp::spin_until_future_complete(shared_from_this(), future, 5s) !=
-        rclcpp::FutureReturnCode::SUCCESS) {
-      RCLCPP_ERROR(get_logger(), "Timed out requesting mode %u", mode);
-      return false;
-    }
-
-    const auto response = future.get();
-    if (!response->success) {
-      if (response->current_mode == mode || response->current_mode > mode) {
-        RCLCPP_WARN(get_logger(),
-                    "Mode %u rejected but current mode is already %u: %s", mode,
-                    response->current_mode, response->message.c_str());
-        return true;
-      }
-      RCLCPP_ERROR(get_logger(), "Mode %u rejected: %s", mode, response->message.c_str());
-      return false;
-    }
-
-    RCLCPP_INFO(get_logger(), "Mode %u accepted: %s", mode, response->message.c_str());
-    return true;
-  }
-
   void publishVelocityFor(double linear_x, double seconds)
   {
     const auto end_time =
@@ -116,7 +68,6 @@ private:
     }
   }
 
-  rclcpp::Client<SetOperatingMode>::SharedPtr mode_client_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_pub_;
   double speed_{0.5};
   double duration_{2.0};
