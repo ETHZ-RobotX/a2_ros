@@ -8,4 +8,4 @@
 set -e
 # colcon build --packages-up-to a2_pc2
 source /a2_ros/scripts/setup.sh
-exec ros2 run joy joy_node --ros-args -p deadzone:=0.05 -p autorepeat_rate:=500.0
+exec ros2 run joy joy_node --ros-args -p deadzone:=0.05 -p autorepeat_rate:=50.0

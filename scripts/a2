@@ -33,6 +33,60 @@ _set_mode() {
     return 1
 }
 
+# pgrep -f pattern matching a managed stack's launch + node processes — but NOT
+# the `a2 <cmd>` wrapper itself. Used to stop a prior instance before relaunching.
+_stack_pattern() {
+    case "$1" in
+        sim)         echo "sim.launch.py" ;;
+        nav)         echo "navigation.launch.py" ;;
+        explore)     echo "exploration.launch.py" ;;
+        dlio)        echo "dlio.launch.py" ;;
+        resple)      echo "resple.launch.py" ;;
+        detect)      echo "object_detection" ;;
+        foxglove)    echo "foxglove_bridge" ;;
+        plotjuggler) echo "run plotjuggler|/plotjuggler" ;;
+        *)           return 1 ;;
+    esac
+}
+
+# PIDs of processes matching $1, excluding this process and its parent.
+_stack_pids() {
+    pgrep -f "$1" 2>/dev/null | grep -vwE "$$|$PPID" || true
+}
+
+# Stop processes matching $1: SIGINT first (lets ros2 launch tear its nodes down),
+# escalating to SIGKILL after a grace period. Never targets this process.
+_kill_stale() {
+    local pat="$1" pids
+    pids=$(_stack_pids "$pat")
+    [[ -z "$pids" ]] && return 0
+    info "Stopping existing: $pat ($(echo $pids | tr '\n' ' '))"
+    kill -INT $pids 2>/dev/null || true
+    for _ in $(seq 1 20); do
+        pids=$(_stack_pids "$pat")
+        [[ -z "$pids" ]] && return 0
+        sleep 0.5
+    done
+    warn "Force-killing: $pat"
+    kill -9 $(_stack_pids "$pat") 2>/dev/null || true
+}
+
+# Run a managed stack: stop any prior instance (Docker Desktop won't kill it on
+# terminal close), then launch with graceful Ctrl+C teardown. set -m isolates the
+# launch in its own process group; the trap forwards a graceful SIGINT.
+_run() {
+    local name="$1"; shift
+    local pat; pat="$(_stack_pattern "$name" || true)"
+    [[ -n "$pat" ]] && _kill_stale "$pat"
+    set -m
+    "$@" &
+    local pid=$!
+    set +m
+    trap 'kill -INT "$pid" 2>/dev/null || true' HUP INT TERM
+    while kill -0 "$pid" 2>/dev/null; do wait "$pid" || true; done
+    trap - HUP INT TERM
+}
+
 _usage() {
     cat <<EOF
 Usage: a2 <command> [options]
@@ -59,6 +113,7 @@ Robot:
   nav   [--rviz]     Launch navigation stack
   explore [--rviz]   Launch autonomous exploration (TARE)
   dlio  [--rviz]     Launch DLIO LiDAR-inertial odometry
+  resple [--rviz]    Launch RESPLE LiDAR-inertial odometry
   detect             Launch object detection (YOLO, CPU); _real launch on robot
 
 Introspection:
@@ -75,6 +130,9 @@ Utilities:
   foxglove           Launch Foxglove Bridge (default port 8765)
   router             Start Zenoh router (foreground)
   verify             Verify MuJoCo installation
+  ps                 List running managed stacks and their PIDs
+  down [stack]       Stop a running stack (sim|nav|explore|dlio|resple|detect|
+                     foxglove|plotjuggler), or all of them if no stack is given
 
 Mode:      ${A2_MODE:-unknown}
 Workspace: $WORKSPACE_DIR
@@ -153,7 +211,7 @@ case "$CMD" in
     sim)
         SIM_ARGS=(rviz:=$RVIZ dlio:=$DLIO headless:=$HEADLESS)
         [ -n "$SCENE" ] && SIM_ARGS+=(scene:="$SCENE")
-        ros2 launch a2_ros sim.launch.py "${SIM_ARGS[@]}"
+        _run sim ros2 launch a2_ros sim.launch.py "${SIM_ARGS[@]}"
         ;;
     walk)
         _set_mode 4
@@ -180,22 +238,27 @@ case "$CMD" in
         ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args "${KB_ARGS[@]}"
         ;;
     nav)
-        ros2 launch a2_ros navigation.launch.py rviz:=$RVIZ
+        _run nav ros2 launch a2_ros navigation.launch.py rviz:=$RVIZ
         ;;
     explore)
-        ros2 launch a2_ros exploration.launch.py rviz:=$RVIZ
+        _run explore ros2 launch a2_ros exploration.launch.py rviz:=$RVIZ
         ;;
     dlio)
         DLIO_ARGS=(rviz:=$RVIZ)
         [ "$A2_MODE" = "sim" ] && DLIO_ARGS+=(use_sim_time:=true)
-        ros2 launch a2_ros dlio.launch.py "${DLIO_ARGS[@]}"
+        _run dlio ros2 launch a2_ros dlio.launch.py "${DLIO_ARGS[@]}"
+        ;;
+    resple)
+        RESPLE_ARGS=(rviz:=$RVIZ)
+        [ "$A2_MODE" = "sim" ] && RESPLE_ARGS+=(use_sim_time:=true)
+        _run resple ros2 launch a2_ros resple.launch.py "${RESPLE_ARGS[@]}"
         ;;
     detect)
         # Object detection (YOLO, runs on CPU). Use the real-robot launch on hardware.
         if [ "$A2_MODE" = "robot" ]; then
-            ros2 launch object_detection object_detection_real.launch.py
+            _run detect ros2 launch object_detection object_detection_real.launch.py
         else
-            ros2 launch object_detection object_detection.launch.py
+            _run detect ros2 launch object_detection object_detection.launch.py
         fi
         ;;
     topics)
@@ -236,20 +299,46 @@ case "$CMD" in
         esac
         ;;
     plotjuggler)
-        ros2 run plotjuggler plotjuggler
+        _run plotjuggler ros2 run plotjuggler plotjuggler
         ;;
     foxglove)
         # In sim, align the bridge's clock with the simulator (/clock); on the
         # real robot leave it on wall-clock time.
         FOXGLOVE_ARGS=(port:=8765)
         [ "$A2_MODE" = "sim" ] && FOXGLOVE_ARGS+=(use_sim_time:=true)
-        ros2 launch foxglove_bridge foxglove_bridge_launch.xml "${FOXGLOVE_ARGS[@]}"
+        _run foxglove ros2 launch foxglove_bridge foxglove_bridge_launch.xml "${FOXGLOVE_ARGS[@]}"
         ;;
     router)
         bash "$WORKSPACE_DIR/scripts/start_zenoh_router.sh"
         ;;
     verify)
         bash "$WORKSPACE_DIR/scripts/verify_mujoco.sh"
+        ;;
+    ps)
+        # Show which managed stacks are currently running, with their PIDs.
+        FOUND=false
+        for s in sim nav explore dlio resple detect foxglove plotjuggler; do
+            PIDS="$(_stack_pids "$(_stack_pattern "$s")" | tr '\n' ' ')"
+            if [[ -n "${PIDS// }" ]]; then
+                info "$(printf '%-12s' "$s") ${PIDS}"
+                FOUND=true
+            fi
+        done
+        $FOUND || info "No managed stacks running."
+        ;;
+    down)
+        # Stop a managed stack (or all of them) — needed because Docker Desktop
+        # doesn't kill exec'd processes when the terminal closes.
+        TARGET="${ARGS[1]:-}"
+        if [[ -n "$TARGET" ]]; then
+            PAT="$(_stack_pattern "$TARGET")" || { error "Unknown stack: $TARGET"; exit 1; }
+            _kill_stale "$PAT"
+        else
+            for s in sim nav explore dlio resple detect foxglove plotjuggler; do
+                _kill_stale "$(_stack_pattern "$s")"
+            done
+        fi
+        info "Done."
         ;;
     "" | help)
         _usage
