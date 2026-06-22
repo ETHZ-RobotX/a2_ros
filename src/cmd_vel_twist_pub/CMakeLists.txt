@@ -26,11 +26,15 @@ endif()
 
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 
 add_executable(twist_publisher src/twist_publisher.cpp)
 ament_target_dependencies(twist_publisher rclcpp geometry_msgs)
 
-install(TARGETS twist_publisher
+add_executable(waypoint_navigator src/waypoint_navigator.cpp)
+ament_target_dependencies(waypoint_navigator rclcpp geometry_msgs nav_msgs)
+
+install(TARGETS twist_publisher waypoint_navigator
   DESTINATION lib/${PROJECT_NAME})
 
 
