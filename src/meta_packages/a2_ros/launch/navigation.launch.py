@@ -66,8 +66,8 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'scanVoxelSize':       0.05,
-                'decayTime':           10.0,
-                'noDecayDis':          0.0,
+                'decayTime':           30.0, # 10.0
+                'noDecayDis':          2.0, # 0.0
                 'clearingDis':         8.0,
                 'useSorting':          True,
                 'quantileZ':           0.25,
@@ -86,8 +86,8 @@ def generate_launch_description():
                 'noDataBlockSkipNum':  0,
                 'minBlockPointNum':    10,
                 'vehicleHeight':       0.5,
-                'voxelPointUpdateThre': 100,
-                'voxelTimeUpdateThre': 2.0,
+                'voxelPointUpdateThre': 60, # 100
+                'voxelTimeUpdateThre': 4.0, # 2.0
                 'minRelZ':             -1.0,
                 'maxRelZ':             1.0,
                 'disRatioZ':           0.2,  # 0.2
@@ -102,20 +102,20 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'scanVoxelSize':        0.1,
-                'decayTime':            10.0,
-                'noDecayDis':           0.0,
+                'decayTime':            30.0, # 10.0
+                'noDecayDis':           2.0, # 0.0
                 'clearingDis':          30.0,
                 'useSorting':           True,
                 'quantileZ':           0.25,  # 0.25
                 'vehicleHeight':        0.5,
-                'voxelPointUpdateThre': 100,
-                'voxelTimeUpdateThre':  2.0,
+                'voxelPointUpdateThre': 60, # 100
+                'voxelTimeUpdateThre':  4.0, # 2.0
                 'lowerBoundZ':          -1.0,
                 'upperBoundZ':          1.0,
                 'disRatioZ':            0.1,
                 'checkTerrainConn':     True,
                 'terrainUnderVehicle':  -0.75,
-                'terrainConnThre':      0.5,
+                'terrainConnThre':      0.4, # 0.5
                 'ceilingFilteringThre': 2.0,
                 'localTerrainMapRadius': 4.0,
             }],
@@ -180,14 +180,14 @@ def generate_launch_description():
                 'sensorOffsetY':    0.0,
                 'pubSkipNum':       1,
                 'twoWayDrive':      False,
-                'lookAheadDis':     0.4,
-                'yawRateGain':      10.0,
+                'lookAheadDis':     0.6, # 0.4
+                'yawRateGain':      7.0, # 10.0
                 'stopYawRateGain':  8.0,
-                'maxYawRate':       45.0,
+                'maxYawRate':       35.0, # 45.0
                 'maxSpeed':         0.5,
                 'maxAccel':         2.0,
                 'switchTimeThre':   1.0,
-                'dirDiffThre':      0.1,
+                'dirDiffThre':      0.2, # 0.1
                 'stopDisThre':      0.3,
                 'slowDwnDisThre':   0.6,
                 'useInclRateToSlow': False,
