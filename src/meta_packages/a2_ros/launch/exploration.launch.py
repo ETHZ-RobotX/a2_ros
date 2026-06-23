@@ -63,7 +63,7 @@ def generate_launch_description():
                 'scanVoxelSize':       0.05,
                 'decayTime':           20.0 ,# 10.0,
                 'noDecayDis':          5.0,
-                'clearingDis':         10.0,
+                'clearingDis':         25.0,
                 'useSorting':          True,
                 'quantileZ':           0.25,  # 0.25
                 'considerDrop':        True,
@@ -99,7 +99,7 @@ def generate_launch_description():
                 'scanVoxelSize':        0.1,
                 'decayTime':            25.0, #15.0,
                 'noDecayDis':           0.0,
-                'clearingDis':          20.0, #30.0,
+                'clearingDis':          35.0,
                 'useSorting':           True,
                 'quantileZ':            0.25,
                 'vehicleHeight':        0.5,

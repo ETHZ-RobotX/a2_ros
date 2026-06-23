@@ -43,9 +43,9 @@ tare_planner_node:
     kUseCoverageBoundaryOnObjectSurface : false  # clip keypose cloud to coverage boundary polygon
 
     # Rolling occupancy grid (used for frontier detection)
-    rolling_occupancy_grid/resolution_x : 0.2  # grid cell size X (m)
-    rolling_occupancy_grid/resolution_y : 0.2 #0.2  # grid cell size Y (m)
-    rolling_occupancy_grid/resolution_z : 0.2 #0.2  # grid cell size Z (m)
+    rolling_occupancy_grid/resolution_x : 0.2   # grid cell size X (m)
+    rolling_occupancy_grid/resolution_y : 0.2  #0.2  # grid cell size Y (m)
+    rolling_occupancy_grid/resolution_z : 0.2  #0.2  # grid cell size Z (m)
 
     kSurfaceCloudDwzLeafSize : 0.3      # voxel leaf size for surface cloud downsampling (m)
     kCollisionCloudDwzLeafSize : 0.1 #0.2    # voxel leaf size for collision cloud downsampling (m)
@@ -73,8 +73,8 @@ tare_planner_node:
     viewpoint_manager/number_x : 25 #10    # viewpoint grid cells in X
     viewpoint_manager/number_y : 25 #10    # viewpoint grid cells in Y
     viewpoint_manager/number_z : 1     # viewpoint grid cells in Z (1 = 2-D planning)
-    viewpoint_manager/resolution_x : 0.4 #0.8  # viewpoint cell size X (m)
-    viewpoint_manager/resolution_y : 0.4 #0.8  # viewpoint cell size Y (m)
+    viewpoint_manager/resolution_x : 0.3 #0.8  # viewpoint cell size X (m)
+    viewpoint_manager/resolution_y : 0.3 #0.8  # viewpoint cell size Y (m)
     viewpoint_manager/resolution_z : 0.0  # viewpoint cell size Z (m)
     kConnectivityHeightDiffThr : 0.25     # max height difference for two viewpoints to be connected (m)
     kGreedyViewPointSampleRange : 3       # candidates sampled per greedy selection step
@@ -93,20 +93,20 @@ tare_planner_node:
     kCheckDynamicObstacleCollision : false  # check collision against recent obstacle frames (for dynamic envs)
     kCollisionFrameCountMax : 3             # history frames used for dynamic obstacle collision check
 
-    kSensorRange : 25.0 #10.0          # max range used for coverage calculations — matches lidar cutoff (m)
+    kSensorRange : 15.0 #10.0          # max range used for coverage calculations — matches lidar cutoff (m)
     kNeighborRange : 2.5         # search radius for viewpoint connectivity (m)
     kCoverageOcclusionThr : 0.2 #0.3  # distance threshold for occlusion in coverage calculation (m)
     kCoverageDilationRadius : 0.8  # dilation radius applied to covered area (m)
 
     # Grid World — coarse global map tracking exploration state per cell
-    kGridWorldXNum : 150 #121          # global grid cells in X (total X = XNum * CellHeight)
-    kGridWorldYNum : 150 #121          # global grid cells in Y
+    kGridWorldXNum : 121          # global grid cells in X (total X = XNum * CellHeight)
+    kGridWorldYNum : 121          # global grid cells in Y
     kGridWorldZNum : 1            # global grid cells in Z (1 = flat/ground-level only)
     kGridWorldCellHeight : 1.5    # size of each global grid cell (m)
     kGridWorldNearbyGridNum : 5   # nearby cells considered for local search
-    kMinAddPointNumSmall : 20     # min new coverage points for a minor coverage increment
-    kMinAddPointNumBig : 40       # min new coverage points for a significant coverage increment
-    kMinAddFrontierPointNum : 10  # min points for a frontier cell to remain active
+    kMinAddPointNumSmall : 50 #20    # min new coverage points for a minor coverage increment
+    kMinAddPointNumBig : 80  #40     # min new coverage points for a significant coverage increment
+    kMinAddFrontierPointNum : 30 #10  # min points for a frontier cell to remain active
     kCellExploringToCoveredThr : 1    # coverage count to transition cell: exploring → covered
     kCellCoveredToExploringThr : 10   # coverage count drop to revert cell: covered → exploring
     kCellExploringToAlmostCoveredThr : 10   # coverage count for exploring → almost-covered
