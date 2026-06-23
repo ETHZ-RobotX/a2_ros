@@ -22,10 +22,11 @@ public:
     position_tolerance_ = this->declare_parameter<double>("position_tolerance", 0.1); // m
     angle_tolerance_  = this->declare_parameter<double>("angle_tolerance", 0.1); // rad
     frame_id_         = this->declare_parameter<std::string>("frame_id", "base_link");
+    std::string state_topic = this->declare_parameter<std::string>("state_topic", "/state_estimation");  // use /odom for sim
 
     // Subscribe to odometry
     odom_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
-      "/odom", 10, std::bind(&WaypointNavigator::odom_callback, this, std::placeholders::_1));
+      state_topic, 10, std::bind(&WaypointNavigator::odom_callback, this, std::placeholders::_1));
 
     // Publisher for twist commands
     publisher_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel", 10);
@@ -35,8 +36,8 @@ public:
       100ms, std::bind(&WaypointNavigator::timer_callback, this));
 
     RCLCPP_INFO(this->get_logger(),
-      "Waypoint Navigator: delta=(%.2f, %.2f) m, v=%.2f m/s, pos_tol=%.2f m, ang_tol=%.2f rad",
-      delta_x_, delta_y_, linear_speed_, position_tolerance_, angle_tolerance_);
+      "Waypoint Navigator: delta=(%.2f, %.2f) m, v=%.2f m/s, pos_tol=%.2f m, ang_tol=%.2f rad, topic=%s",
+      delta_x_, delta_y_, linear_speed_, position_tolerance_, angle_tolerance_, state_topic.c_str());
   }
 
 private:

@@ -34,7 +34,10 @@ ament_target_dependencies(twist_publisher rclcpp geometry_msgs)
 add_executable(waypoint_navigator src/waypoint_navigator.cpp)
 ament_target_dependencies(waypoint_navigator rclcpp geometry_msgs nav_msgs)
 
-install(TARGETS twist_publisher waypoint_navigator
+add_executable(waypoint_sequence_navigator src/waypoint_sequence_navigator.cpp)
+ament_target_dependencies(waypoint_sequence_navigator rclcpp geometry_msgs nav_msgs)
+
+install(TARGETS twist_publisher waypoint_navigator waypoint_sequence_navigator
   DESTINATION lib/${PROJECT_NAME})
 
 
