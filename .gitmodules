@@ -49,4 +49,4 @@
 	url = git@github.com:ETHZ-RobotX/a2_utils.git
 [submodule "external/resple"]
 	path = external/resple
-	url = git@github.com:ETHZ-RobotX/RESPLE.git
+	url = https://github.com/chriswe12/RESPLE.git
