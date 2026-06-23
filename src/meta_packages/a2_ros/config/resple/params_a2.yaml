@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     topic_imu: /front_lidar/imu
-    lidars: ["front_hesai"]
+    lidars: ["front_hesai"] #, "back_hesai"]
     front_hesai:
       topic_lidar: /front_lidar/points
       lidar_type: Hesai

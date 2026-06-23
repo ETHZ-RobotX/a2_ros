@@ -90,7 +90,7 @@ def generate_launch_description():
                 'voxelTimeUpdateThre': 2.0,
                 'minRelZ':             -1.0,
                 'maxRelZ':             1.0,
-                'disRatioZ':           0.2,
+                'disRatioZ':           0.2,  # 0.2
             }],
         ),
 
@@ -106,7 +106,7 @@ def generate_launch_description():
                 'noDecayDis':           0.0,
                 'clearingDis':          30.0,
                 'useSorting':           True,
-                'quantileZ':            0.25,
+                'quantileZ':           0.25,  # 0.25
                 'vehicleHeight':        0.5,
                 'voxelPointUpdateThre': 100,
                 'voxelTimeUpdateThre':  2.0,
@@ -140,7 +140,7 @@ def generate_launch_description():
                 'checkObstacle':       True,
                 'checkRotObstacle':    True,
                 'adjacentRange':       3.5,
-                'obstacleHeightThre':  0.25,
+                'obstacleHeightThre':  0.25,  # 0.25
                 'groundHeightThre':    0.1,
                 'costHeightThre':      0.1,
                 'costScore':           0.02,
@@ -231,6 +231,12 @@ def generate_launch_description():
                 ('/scan_cloud',         '/registered_scan'),
                 ('/terrain_local_cloud','/terrain_map'),
             ],
+            # remappings=[
+            #     ('/odom_world',         '/state_estimation'),
+            #     ('/terrain_cloud',      '/global_map'),
+            #     ('/scan_cloud',         '/current_scan'),
+            #     ('/terrain_local_cloud','/terrain_map'),
+            # ],
         ),
 
         # ---- RViz with navigation config ----

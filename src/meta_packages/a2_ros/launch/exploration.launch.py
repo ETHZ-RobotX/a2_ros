@@ -61,14 +61,14 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'scanVoxelSize':       0.05,
-                'decayTime':           10.0,
-                'noDecayDis':          0.0,
-                'clearingDis':         8.0,
+                'decayTime':           20.0 ,# 10.0,
+                'noDecayDis':          5.0,
+                'clearingDis':         10.0,
                 'useSorting':          True,
-                'quantileZ':           0.25,
+                'quantileZ':           0.25,  # 0.25
                 'considerDrop':        True,
                 'limitGroundLift':     True,
-                'maxGroundLift':       0.25,
+                'maxGroundLift':       0.1,#0.25,
                 'clearDyObs':          False,
                 'minDyObsDis':         0.3,
                 'minDyObsAngle':       0.0,
@@ -85,7 +85,7 @@ def generate_launch_description():
                 'voxelTimeUpdateThre': 2.0,
                 'minRelZ':             -1.0,
                 'maxRelZ':             1.0,
-                'disRatioZ':           0.2,
+                'disRatioZ':           0.2,  # 0.2
             }],
         ),
 
@@ -97,9 +97,9 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'scanVoxelSize':        0.1,
-                'decayTime':            10.0,
+                'decayTime':            25.0, #15.0,
                 'noDecayDis':           0.0,
-                'clearingDis':          30.0,
+                'clearingDis':          20.0, #30.0,
                 'useSorting':           True,
                 'quantileZ':            0.25,
                 'vehicleHeight':        0.5,
@@ -129,12 +129,12 @@ def generate_launch_description():
                 'sensorOffsetY':       0.0,
                 'twoWayDrive':         False,
                 'laserVoxelSize':      0.05,
-                'terrainVoxelSize':    0.2,
+                'terrainVoxelSize':    0.15, #0.2,
                 'useTerrainAnalysis':  True,
                 'checkObstacle':       True,
                 'checkRotObstacle':    True,
-                'adjacentRange':       3.5,
-                'obstacleHeightThre':  0.25,
+                'adjacentRange':       2.0, #3.5,
+                'obstacleHeightThre':  0.25,  # 0.25
                 'groundHeightThre':    0.1,
                 'costHeightThre':      0.1,
                 'costScore':           0.02,
@@ -149,7 +149,7 @@ def generate_launch_description():
                 'pathScale':           1.0,
                 'minPathScale':        0.75,
                 'pathScaleStep':       0.25,
-                'pathScaleBySpeed':    True,
+                'pathScaleBySpeed':    False, #True,
                 'minPathRange':        1.0,
                 'pathRangeStep':       0.5,
                 'pathRangeBySpeed':    True,
@@ -175,9 +175,9 @@ def generate_launch_description():
                 'pubSkipNum':       1,
                 'twoWayDrive':      False,
                 'lookAheadDis':     0.4,
-                'yawRateGain':      10.0,
-                'stopYawRateGain':  8.0,
-                'maxYawRate':       45.0,
+                'yawRateGain':      3.0, #5.0, #10.0,
+                'stopYawRateGain':  4.0, #8.0,
+                'maxYawRate':       30.0, #45.0,
                 'maxSpeed':         0.5,
                 'maxAccel':         2.0,
                 'switchTimeThre':   1.0,
@@ -199,6 +199,15 @@ def generate_launch_description():
                 'autonomySpeed':    2.0,
                 'joyToSpeedDelay':  2.0,
             }],
+        ),
+
+        # Terrain map acummulator
+
+        Node(
+            package='terrain_map_accumulator',
+            executable='terrain_map_accumulator',
+            name='terrain_map_accumulator_node',
+            output='screen',
         ),
 
         # ---- TARE planner (autonomous exploration) ----
