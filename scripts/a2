@@ -256,9 +256,9 @@ case "$CMD" in
     detect)
         # Object detection (YOLO, runs on CPU). Use the real-robot launch on hardware.
         if [ "$A2_MODE" = "robot" ]; then
-            _run detect ros2 launch object_detection object_detection_real.launch.py
+            _run detect ros2 launch object_detection object_detection_real.launch.py "${ARGS[@]:1}"
         else
-            _run detect ros2 launch object_detection object_detection.launch.py
+            _run detect ros2 launch object_detection object_detection.launch.py "${ARGS[@]:1}"
         fi
         ;;
     topics)
