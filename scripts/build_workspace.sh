@@ -13,16 +13,34 @@ cd "$WORKSPACE_DIR"
 # the machine (the committed colcon defaults can't compute this — they're read
 # verbatim). The CLI flag overrides parallel-workers from $COLCON_DEFAULTS_FILE.
 # Override the worker count with A2_BUILD_JOBS.
-CORES="$(nproc 2>/dev/null || echo 2)"
-JOBS="${A2_BUILD_JOBS:-$(( CORES / 2 ))}"
-[[ "$JOBS" -lt 1 ]] && JOBS=1
-info "Parallel workers: ${JOBS} (of ${CORES} cores)"
+# NIKO COMMENTED OUT
+# CORES="$(nproc 2>/dev/null || echo 2)"
+# JOBS="${A2_BUILD_JOBS:-$(( CORES / 2 ))}"
+# [[ "$JOBS" -lt 1 ]] && JOBS=1
+# info "Parallel workers: ${JOBS} (of ${CORES} cores)"
+
+info "Building sequentially (one package at a time)..."
+
+COLCON_ARGS=(
+    --executor sequential
+    --event-handlers console_direct+
+)
+
+
+# if [[ -n "$PACKAGE" ]]; then
+#     info "Building up to: $PACKAGE"
+#     colcon build --packages-up-to "$PACKAGE" --parallel-workers "$JOBS"
+# else
+#     info "Building workspace..."
+#     colcon build --parallel-workers "$JOBS"
+# fi
 
 if [[ -n "$PACKAGE" ]]; then
     info "Building up to: $PACKAGE"
-    colcon build --packages-up-to "$PACKAGE" --parallel-workers "$JOBS"
+    colcon build --packages-up-to "$PACKAGE" "${COLCON_ARGS[@]}"
 else
     info "Building workspace..."
-    colcon build --parallel-workers "$JOBS"
+    colcon build "${COLCON_ARGS[@]}"
 fi
+
 info "Build complete."

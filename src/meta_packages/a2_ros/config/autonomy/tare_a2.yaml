@@ -17,14 +17,14 @@ tare_planner_node:
     pub_momentum_activation_count_topic_ : momentum_activation_count
 
     kAutoStart : true               # start exploring immediately without external trigger
-    kRushHome : false               # return to start when near home after exploration finishes
+    kRushHome : true #false               # return to start when near home after exploration finishes
     kUseTerrainHeight : true        # use terrain map height for terrain-aware planning
     kCheckTerrainCollision : true   # reject terrain points above kTerrainCollisionThreshold as obstacles
     kExtendWayPoint : true          # extend lookahead waypoint further if it is within extend distance
     kUseLineOfSightLookAheadPoint : true  # require line-of-sight to lookahead point; pick alternative if blocked
-    kNoExplorationReturnHome : false      # return to start when exploration is complete
-    kExtendWayPointDistanceBig : 4.0     # extension distance when waypoint has line-of-sight (m)
-    kExtendWayPointDistanceSmall : 2.5   # extension distance when waypoint does not have line-of-sight (m)
+    kNoExplorationReturnHome : true #false      # return to start when exploration is complete
+    kExtendWayPointDistanceBig : 2.0 #4.0     # extension distance when waypoint has line-of-sight (m)
+    kExtendWayPointDistanceSmall : 1.5 #2.5   # extension distance when waypoint does not have line-of-sight (m)
     kKeyposeCloudDwzFilterLeafSize : 0.2 # voxel leaf size for downsampling keypose / registered scan clouds (m)
     kRushHomeDist : 10.0            # distance to home below which rush-home activates (m)
     kAtHomeDistThreshold : 0.5      # distance to consider robot arrived at home (m)
@@ -38,17 +38,17 @@ tare_planner_node:
     # PlanningEnv
     kUseFrontier : true                       # enable frontier-based exploration
     kFrontierClusterTolerance : 1.0           # max distance to merge frontier points into one cluster (m)
-    kFrontierClusterMinSize : 20              # min points in a frontier cluster to keep it
+    kFrontierClusterMinSize : 8 #20              # min points in a frontier cluster to keep it
     kUseCoverageBoundaryOnFrontier : false    # clip frontiers to coverage boundary polygon
     kUseCoverageBoundaryOnObjectSurface : false  # clip keypose cloud to coverage boundary polygon
 
     # Rolling occupancy grid (used for frontier detection)
-    rolling_occupancy_grid/resolution_x : 0.2  # grid cell size X (m)
-    rolling_occupancy_grid/resolution_y : 0.2  # grid cell size Y (m)
-    rolling_occupancy_grid/resolution_z : 0.2  # grid cell size Z (m)
+    rolling_occupancy_grid/resolution_x : 0.2   # grid cell size X (m)
+    rolling_occupancy_grid/resolution_y : 0.2  #0.2  # grid cell size Y (m)
+    rolling_occupancy_grid/resolution_z : 0.2  #0.2  # grid cell size Z (m)
 
     kSurfaceCloudDwzLeafSize : 0.3      # voxel leaf size for surface cloud downsampling (m)
-    kCollisionCloudDwzLeafSize : 0.2    # voxel leaf size for collision cloud downsampling (m)
+    kCollisionCloudDwzLeafSize : 0.1  #0.2    # voxel leaf size for collision cloud downsampling (m)
     kKeyposeCloudStackNum : 5           # number of past keypose clouds stacked for surface extraction
     kPointCloudRowNum : 50              # cells in X for spatial partitioning grid
     kPointCloudColNum : 50              # cells in Y for spatial partitioning grid
@@ -70,16 +70,16 @@ tare_planner_node:
     keypose_graph/kAddEdgeCollisionCheckPointNumThr : 1   # collision points needed to reject an edge
 
     # ViewPointManager — grid of candidate sensor poses for coverage planning
-    viewpoint_manager/number_x : 10    # viewpoint grid cells in X
-    viewpoint_manager/number_y : 10    # viewpoint grid cells in Y
+    viewpoint_manager/number_x : 15   # viewpoint grid cells in X
+    viewpoint_manager/number_y : 15    # viewpoint grid cells in Y
     viewpoint_manager/number_z : 1     # viewpoint grid cells in Z (1 = 2-D planning)
-    viewpoint_manager/resolution_x : 0.8  # viewpoint cell size X (m)
-    viewpoint_manager/resolution_y : 0.8  # viewpoint cell size Y (m)
+    viewpoint_manager/resolution_x : 0.4 #0.8  # viewpoint cell size X (m)
+    viewpoint_manager/resolution_y : 0.4 #0.8  # viewpoint cell size Y (m)
     viewpoint_manager/resolution_z : 0.0  # viewpoint cell size Z (m)
     kConnectivityHeightDiffThr : 0.25     # max height difference for two viewpoints to be connected (m)
     kGreedyViewPointSampleRange : 3       # candidates sampled per greedy selection step
     kLocalPathOptimizationItrMax : 10     # TSP optimization iterations for local path ordering
-    kViewPointCollisionMargin : 0.3       # XY safety margin around each viewpoint for collision (m) — ~A2 half-width
+    kViewPointCollisionMargin : 0.5 #0.3       # XY safety margin around each viewpoint for collision (m) — ~A2 half-width
     kViewPointCollisionMarginZPlus : 0.4  # upward Z margin for viewpoint collision check (m)
     kViewPointCollisionMarginZMinus : 0.3 # downward Z margin for viewpoint collision check (m)
     kCollisionGridZScale : 1.0            # Z scale factor applied to collision grid
@@ -93,20 +93,20 @@ tare_planner_node:
     kCheckDynamicObstacleCollision : false  # check collision against recent obstacle frames (for dynamic envs)
     kCollisionFrameCountMax : 3             # history frames used for dynamic obstacle collision check
 
-    kSensorRange : 10.0          # max range used for coverage calculations — matches lidar cutoff (m)
+    kSensorRange : 5.0 #10.0          # max range used for coverage calculations — matches lidar cutoff (m)
     kNeighborRange : 2.5         # search radius for viewpoint connectivity (m)
     kCoverageOcclusionThr : 0.3  # distance threshold for occlusion in coverage calculation (m)
-    kCoverageDilationRadius : 0.8  # dilation radius applied to covered area (m)
+    kCoverageDilationRadius : 0.2 #0.8  # dilation radius applied to covered area (m)
 
     # Grid World — coarse global map tracking exploration state per cell
     kGridWorldXNum : 121          # global grid cells in X (total X = XNum * CellHeight)
     kGridWorldYNum : 121          # global grid cells in Y
     kGridWorldZNum : 1            # global grid cells in Z (1 = flat/ground-level only)
     kGridWorldCellHeight : 1.5    # size of each global grid cell (m)
-    kGridWorldNearbyGridNum : 5   # nearby cells considered for local search
-    kMinAddPointNumSmall : 20     # min new coverage points for a minor coverage increment
-    kMinAddPointNumBig : 40       # min new coverage points for a significant coverage increment
-    kMinAddFrontierPointNum : 10  # min points for a frontier cell to remain active
+    kGridWorldNearbyGridNum : 15   # nearby cells considered for local search
+    kMinAddPointNumSmall : 10 #20    # min new coverage points for a minor coverage increment
+    kMinAddPointNumBig : 20 #40     # min new coverage points for a significant coverage increment
+    kMinAddFrontierPointNum : 4 #10  # min points for a frontier cell to remain active
     kCellExploringToCoveredThr : 1    # coverage count to transition cell: exploring → covered
     kCellCoveredToExploringThr : 10   # coverage count drop to revert cell: covered → exploring
     kCellExploringToAlmostCoveredThr : 10   # coverage count for exploring → almost-covered

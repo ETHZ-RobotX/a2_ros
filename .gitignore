@@ -8,6 +8,7 @@ log/
 bags/
 *.pyc
 __pycache__/
+tmp/
 
 # Python venv
 .venv/
@@ -25,5 +26,7 @@ external/gscam2/
 
 .claude/
 
-# untracked
+# local_cris
 untracked/
+rosbags/
+scripts/check_cloud_quality.py

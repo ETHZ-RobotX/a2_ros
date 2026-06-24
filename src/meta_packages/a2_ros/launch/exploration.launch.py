@@ -41,7 +41,7 @@ def generate_launch_description():
     description_dir = get_package_share_directory('a2_description')
     a2_ros_dir      = get_package_share_directory('a2_ros')
     rviz_path        = os.path.join(a2_ros_dir, 'rviz', 'exploration.rviz')
-    tare_config      = os.path.join(a2_ros_dir, 'config', 'autonomy', 'tare_a2.yaml')
+    tare_config      = os.path.join(a2_ros_dir, 'config', 'autonomy', 'matterport.yaml')
 
     rviz_arg = DeclareLaunchArgument(
         'rviz',
@@ -54,18 +54,18 @@ def generate_launch_description():
         SetParameter(name='use_sim_time', value=False),
 
         # ---- terrain analysis (local map) ----
-        Node(
+                Node(
             package='terrain_analysis',
             executable='terrainAnalysis',
             name='terrainAnalysis',
             output='screen',
             parameters=[{
                 'scanVoxelSize':       0.05,
-                'decayTime':           10.0,
-                'noDecayDis':          0.0,
-                'clearingDis':         8.0,
+                'decayTime':           20.0 ,# 10.0,
+                'noDecayDis':          5.0,
+                'clearingDis':         25.0,
                 'useSorting':          True,
-                'quantileZ':           0.25,
+                'quantileZ':           0.25,  # 0.25
                 'considerDrop':        True,
                 'limitGroundLift':     True,
                 'maxGroundLift':       0.25,
@@ -85,7 +85,7 @@ def generate_launch_description():
                 'voxelTimeUpdateThre': 2.0,
                 'minRelZ':             -1.0,
                 'maxRelZ':             1.0,
-                'disRatioZ':           0.2,
+                'disRatioZ':           0.2,  # 0.2
             }],
         ),
 
@@ -97,9 +97,9 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'scanVoxelSize':        0.1,
-                'decayTime':            10.0,
+                'decayTime':            25.0, #15.0,
                 'noDecayDis':           0.0,
-                'clearingDis':          30.0,
+                'clearingDis':          35.0,
                 'useSorting':           True,
                 'quantileZ':            0.25,
                 'vehicleHeight':        0.5,
@@ -123,8 +123,8 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'pathFolder':          get_package_share_directory('local_planner') + '/paths',
-                'vehicleLength':       0.65,
-                'vehicleWidth':        0.40,
+                'vehicleLength':       0.8,#0.65,
+                'vehicleWidth':        0.6, #0.40,
                 'sensorOffsetX':       0.0,
                 'sensorOffsetY':       0.0,
                 'twoWayDrive':         False,
@@ -133,29 +133,29 @@ def generate_launch_description():
                 'useTerrainAnalysis':  True,
                 'checkObstacle':       True,
                 'checkRotObstacle':    True,
-                'adjacentRange':       3.5,
+                'adjacentRange':       4.0, #1.0, #2.0, #3.5, #2.0 !!!
                 'obstacleHeightThre':  0.25,
                 'groundHeightThre':    0.1,
                 'costHeightThre':      0.1,
                 'costScore':           0.02,
                 'useCost':             False,
-                'pointPerPathThre':    2,
+                'pointPerPathThre':    2, #4 !!!
                 'minRelZ':             -0.5,
                 'maxRelZ':             0.8,
-                'maxSpeed':            0.5,
+                'maxSpeed':            0.8, #0.8,
                 'dirWeight':           0.1,
                 'dirThre':             90.0,
                 'dirToVehicle':        False,
-                'pathScale':           1.0,
-                'minPathScale':        0.75,
+                'pathScale':           0.5, #1.0,
+                'minPathScale':        0.3,
                 'pathScaleStep':       0.25,
-                'pathScaleBySpeed':    True,
-                'minPathRange':        1.0,
-                'pathRangeStep':       0.5,
+                'pathScaleBySpeed':    False, #True,
+                'minPathRange':        1.0, #1.3,#1.0,
+                'pathRangeStep':       0.1, #0.5,
                 'pathRangeBySpeed':    True,
                 'pathCropByGoal':      True,
                 'autonomyMode':        True,
-                'autonomySpeed':       2.0,
+                'autonomySpeed':       0.5, #1.0,
                 'joyToSpeedDelay':     2.0,
                 'joyToCheckObstacleDelay': 5.0,
                 'goalClearRange':      0.4,
@@ -174,14 +174,14 @@ def generate_launch_description():
                 'sensorOffsetY':    0.0,
                 'pubSkipNum':       1,
                 'twoWayDrive':      False,
-                'lookAheadDis':     0.4,
-                'yawRateGain':      10.0,
-                'stopYawRateGain':  8.0,
+                'lookAheadDis':     1.0, # 0.7,
+                'yawRateGain':      4.0,#0.8,
+                'stopYawRateGain':  3.0,#,1.0,
                 'maxYawRate':       45.0,
-                'maxSpeed':         0.5,
-                'maxAccel':         2.0,
+                'maxSpeed':         0.8, #0.8,
+                'maxAccel':         1.0, #1.0,
                 'switchTimeThre':   1.0,
-                'dirDiffThre':      0.1,
+                'dirDiffThre':      6.0,
                 'stopDisThre':      0.3,
                 'slowDwnDisThre':   0.6,
                 'useInclRateToSlow': False,
@@ -196,9 +196,18 @@ def generate_launch_description():
                 'noRotAtStop':      False,
                 'noRotAtGoal':      True,
                 'autonomyMode':     True,
-                'autonomySpeed':    2.0,
+                'autonomySpeed':    0.5, #1.0,
                 'joyToSpeedDelay':  2.0,
             }],
+        ),
+
+        # Terrain map acummulator
+
+        Node(
+            package='terrain_map_accumulator',
+            executable='terrain_map_accumulator',
+            name='terrain_map_accumulator_node',
+            output='screen',
         ),
 
         # ---- TARE planner (autonomous exploration) ----

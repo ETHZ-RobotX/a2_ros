@@ -33,7 +33,7 @@ def generate_launch_description():
     map_saving_node = LaunchConfiguration('map_saving_node')
 
     return LaunchDescription([
-        DeclareLaunchArgument('rviz', default_value='false', description='Launch RViz2'),
+        DeclareLaunchArgument('rviz', default_value='true', description='Launch RViz2'),
         DeclareLaunchArgument('use_sim_time', default_value='false', description='Use simulation time'),
         DeclareLaunchArgument('map_saving_node', default_value='false', description='Launch the MapSaving node'),
 
@@ -55,6 +55,10 @@ def generate_launch_description():
             output='both',
             parameters=[a2_params, {'use_sim_time': ParameterValue(use_sim_time, value_type=bool)}],
             arguments=['--ros-args', '--log-level', 'INFO'],
+            # remappings=[
+            #     ('/odometry',         '/state_estimation'),
+            #     ('/current_scan',      '/registered_scan'),
+            #],
         ),
 
         Node(
