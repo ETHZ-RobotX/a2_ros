@@ -26,5 +26,7 @@ external/gscam2/
 
 .claude/
 
-# untracked
+# local_cris
 untracked/
+rosbags/
+scripts/check_cloud_quality.py
