@@ -17,19 +17,19 @@ tare_planner_node:
     pub_momentum_activation_count_topic_ : momentum_activation_count
 
     kAutoStart : true               # start exploring immediately without external trigger
-    kRushHome : false               # return to start when near home after exploration finishes
-    kUseTerrainHeight : true        # use terrain map height for terrain-aware planning
+    kRushHome : true               # return to start when near home after exploration finishes
+    kUseTerrainHeight : false       # flat indoor course; retain terrain only for collision checks
     kCheckTerrainCollision : true   # reject terrain points above kTerrainCollisionThreshold as obstacles
     kExtendWayPoint : true          # extend lookahead waypoint further if it is within extend distance
     kUseLineOfSightLookAheadPoint : true  # require line-of-sight to lookahead point; pick alternative if blocked
-    kNoExplorationReturnHome : false      # return to start when exploration is complete
-    kExtendWayPointDistanceBig : 4.0     # extension distance when waypoint has line-of-sight (m)
-    kExtendWayPointDistanceSmall : 2.5   # extension distance when waypoint does not have line-of-sight (m)
+    kNoExplorationReturnHome : true      # return to start when exploration is complete
+    kExtendWayPointDistanceBig : 3.0     # keep commands inside the local corridor
+    kExtendWayPointDistanceSmall : 0.8   # do not project through a blocked door
     kKeyposeCloudDwzFilterLeafSize : 0.2 # voxel leaf size for downsampling keypose / registered scan clouds (m)
-    kRushHomeDist : 10.0            # distance to home below which rush-home activates (m)
+    kRushHomeDist : 5.0            # distance to home below which rush-home activates (m)
     kAtHomeDistThreshold : 0.5      # distance to consider robot arrived at home (m)
-    kTerrainCollisionThreshold : 0.3     # terrain point intensity above this is treated as a collision obstacle
-    kLookAheadDistance : 5.0        # distance ahead on path to project lookahead waypoint (m)
+    kTerrainCollisionThreshold : 0.5    # retain obstacle evidence on low indoor features
+    kLookAheadDistance : 6.0        # select doorway-centre waypoints, not distant rooms
     kUseMomentum : false            # bias waypoint selection toward previous travel direction
     kDirectionChangeCounterThr : 6       # consecutive direction changes before momentum switch triggers
     kDirectionNoChangeCounterThr : 5     # steps without direction change before stuck detection triggers
@@ -37,18 +37,18 @@ tare_planner_node:
 
     # PlanningEnv
     kUseFrontier : true                       # enable frontier-based exploration
-    kFrontierClusterTolerance : 1.0           # max distance to merge frontier points into one cluster (m)
-    kFrontierClusterMinSize : 20              # min points in a frontier cluster to keep it
+    kFrontierClusterTolerance : 0.5           # preserve separate door/frontier openings
+    kFrontierClusterMinSize : 5               # retain the frontier behind the cyan block
     kUseCoverageBoundaryOnFrontier : false    # clip frontiers to coverage boundary polygon
     kUseCoverageBoundaryOnObjectSurface : false  # clip keypose cloud to coverage boundary polygon
 
     # Rolling occupancy grid (used for frontier detection)
-    rolling_occupancy_grid/resolution_x : 0.2  # grid cell size X (m)
-    rolling_occupancy_grid/resolution_y : 0.2  # grid cell size Y (m)
+    rolling_occupancy_grid/resolution_x : 0.1  # resolve doorway boundaries
+    rolling_occupancy_grid/resolution_y : 0.1  # resolve doorway boundaries
     rolling_occupancy_grid/resolution_z : 0.2  # grid cell size Z (m)
 
-    kSurfaceCloudDwzLeafSize : 0.3      # voxel leaf size for surface cloud downsampling (m)
-    kCollisionCloudDwzLeafSize : 0.2    # voxel leaf size for collision cloud downsampling (m)
+    kSurfaceCloudDwzLeafSize : 0.15     # retain small indoor frontiers
+    kCollisionCloudDwzLeafSize : 0.10   # retain door posts and block edges
     kKeyposeCloudStackNum : 5           # number of past keypose clouds stacked for surface extraction
     kPointCloudRowNum : 50              # cells in X for spatial partitioning grid
     kPointCloudColNum : 50              # cells in Y for spatial partitioning grid
@@ -60,31 +60,33 @@ tare_planner_node:
     kCoverCloudZSqueezeRatio : 2.0      # Z-axis squeeze factor when building coverage cloud
 
     # KeyposeGraph — topological map of where the robot has been
-    keypose_graph/kAddNodeMinDist : 0.5              # min travel distance to add a new keypose node (m)
-    keypose_graph/kAddNonKeyposeNodeMinDist : 0.3    # min distance between intermediate graph nodes (m)
-    keypose_graph/kAddEdgeConnectDistThr : 2.0       # max distance to connect two nearby nodes with an edge (m)
-    keypose_graph/kAddEdgeToLastKeyposeDistThr : 2.0 # max distance to connect node to last keypose (m)
+    keypose_graph/kAddNodeMinDist : 0.3              # add graph nodes through doors/corners
+    keypose_graph/kAddNonKeyposeNodeMinDist : 0.2    # min distance between intermediate graph nodes (m)
+    keypose_graph/kAddEdgeConnectDistThr : 1.5       # avoid shortcutting across door walls
+    keypose_graph/kAddEdgeToLastKeyposeDistThr : 1.5 # avoid shortcutting across door walls
     keypose_graph/kAddEdgeVerticalThreshold : 0.5    # max vertical gap for a valid graph edge (m)
-    keypose_graph/kAddEdgeCollisionCheckResolution : 0.3  # step size for edge collision checks (m)
-    keypose_graph/kAddEdgeCollisionCheckRadius : 0.3      # sphere radius for edge collision checks (m)
+    keypose_graph/kAddEdgeCollisionCheckResolution : 0.3  # sample narrow-door edges densely
+    keypose_graph/kAddEdgeCollisionCheckRadius : 0.4     # A2 half-width plus a small clearance margin
     keypose_graph/kAddEdgeCollisionCheckPointNumThr : 1   # collision points needed to reject an edge
 
     # ViewPointManager — grid of candidate sensor poses for coverage planning
-    viewpoint_manager/number_x : 10    # viewpoint grid cells in X
-    viewpoint_manager/number_y : 10    # viewpoint grid cells in Y
+    viewpoint_manager/number_x : 21    # 8.4 m local indoor horizon at 0.4 m resolution
+    viewpoint_manager/number_y : 21
     viewpoint_manager/number_z : 1     # viewpoint grid cells in Z (1 = 2-D planning)
-    viewpoint_manager/resolution_x : 0.8  # viewpoint cell size X (m)
-    viewpoint_manager/resolution_y : 0.8  # viewpoint cell size Y (m)
+    viewpoint_manager/resolution_x : 0.4  # retain a centreline through traversable doors
+    viewpoint_manager/resolution_y : 0.4
     viewpoint_manager/resolution_z : 0.0  # viewpoint cell size Z (m)
     kConnectivityHeightDiffThr : 0.25     # max height difference for two viewpoints to be connected (m)
     kGreedyViewPointSampleRange : 3       # candidates sampled per greedy selection step
     kLocalPathOptimizationItrMax : 10     # TSP optimization iterations for local path ordering
-    kViewPointCollisionMargin : 0.3       # XY safety margin around each viewpoint for collision (m) — ~A2 half-width
+    # Doorways must supply about 0.56 m of measured free width.  This admits the
+    # cyan route while rejecting the deliberately narrow green door.
+    kViewPointCollisionMargin : 0.28
     kViewPointCollisionMarginZPlus : 0.4  # upward Z margin for viewpoint collision check (m)
     kViewPointCollisionMarginZMinus : 0.3 # downward Z margin for viewpoint collision check (m)
     kCollisionGridZScale : 1.0            # Z scale factor applied to collision grid
-    kCollisionGridResolutionX : 0.2       # collision grid cell size X (m)
-    kCollisionGridResolutionY : 0.2       # collision grid cell size Y (m)
+    kCollisionGridResolutionX : 0.1       # resolve walls around doorway centres
+    kCollisionGridResolutionY : 0.1
     kCollisionGridResolutionZ : 0.0       # collision grid cell size Z (m)
     kCollisionPointThr : 1                # min collision points in a cell to mark viewpoint in collision
     kLineOfSightStopAtNearestObstacle : true          # stop line-of-sight ray at first hit rather than end point
@@ -93,10 +95,10 @@ tare_planner_node:
     kCheckDynamicObstacleCollision : false  # check collision against recent obstacle frames (for dynamic envs)
     kCollisionFrameCountMax : 3             # history frames used for dynamic obstacle collision check
 
-    kSensorRange : 10.0          # max range used for coverage calculations — matches lidar cutoff (m)
-    kNeighborRange : 2.5         # search radius for viewpoint connectivity (m)
+    kSensorRange : 6.0           # indoor range; do not select distant views through doors
+    kNeighborRange : 1.6         # four local viewpoint cells
     kCoverageOcclusionThr : 0.3  # distance threshold for occlusion in coverage calculation (m)
-    kCoverageDilationRadius : 0.8  # dilation radius applied to covered area (m)
+    kCoverageDilationRadius : 0.4  # do not mark the far side of a door covered early
 
     # Grid World — coarse global map tracking exploration state per cell
     kGridWorldXNum : 121          # global grid cells in X (total X = XNum * CellHeight)
@@ -104,9 +106,9 @@ tare_planner_node:
     kGridWorldZNum : 1            # global grid cells in Z (1 = flat/ground-level only)
     kGridWorldCellHeight : 1.5    # size of each global grid cell (m)
     kGridWorldNearbyGridNum : 5   # nearby cells considered for local search
-    kMinAddPointNumSmall : 20     # min new coverage points for a minor coverage increment
-    kMinAddPointNumBig : 40       # min new coverage points for a significant coverage increment
-    kMinAddFrontierPointNum : 10  # min points for a frontier cell to remain active
+    kMinAddPointNumSmall : 8      # keep small room/doorway coverage gains useful
+    kMinAddPointNumBig : 16       # min new coverage points for a significant coverage increment
+    kMinAddFrontierPointNum : 5   # retain frontiers visible through the cyan route
     kCellExploringToCoveredThr : 1    # coverage count to transition cell: exploring → covered
     kCellCoveredToExploringThr : 10   # coverage count drop to revert cell: covered → exploring
     kCellExploringToAlmostCoveredThr : 10   # coverage count for exploring → almost-covered
