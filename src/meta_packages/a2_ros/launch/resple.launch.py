@@ -55,6 +55,10 @@ def generate_launch_description():
             output='both',
             parameters=[a2_params, {'use_sim_time': ParameterValue(use_sim_time, value_type=bool)}],
             arguments=['--ros-args', '--log-level', 'INFO'],
+            # remappings=[
+            #     ('/odometry',         '/state_estimation'),
+            #     ('/current_scan',      '/registered_scan'),
+            #],
         ),
 
         Node(
