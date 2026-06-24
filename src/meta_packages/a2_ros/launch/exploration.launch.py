@@ -54,7 +54,7 @@ def generate_launch_description():
         SetParameter(name='use_sim_time', value=False),
 
         # ---- terrain analysis (local map) ----
-        Node(
+                Node(
             package='terrain_analysis',
             executable='terrainAnalysis',
             name='terrainAnalysis',
@@ -133,16 +133,16 @@ def generate_launch_description():
                 'useTerrainAnalysis':  True,
                 'checkObstacle':       True,
                 'checkRotObstacle':    True,
-                'adjacentRange':       1.0, #2.0, #3.5,
+                'adjacentRange':       4.0, #1.0, #2.0, #3.5, #2.0 !!!
                 'obstacleHeightThre':  0.25,
                 'groundHeightThre':    0.1,
                 'costHeightThre':      0.1,
                 'costScore':           0.02,
                 'useCost':             False,
-                'pointPerPathThre':    4,
+                'pointPerPathThre':    2, #4 !!!
                 'minRelZ':             -0.5,
                 'maxRelZ':             0.8,
-                'maxSpeed':            1.0, #0.8,
+                'maxSpeed':            0.8, #0.8,
                 'dirWeight':           0.1,
                 'dirThre':             90.0,
                 'dirToVehicle':        False,
@@ -178,8 +178,8 @@ def generate_launch_description():
                 'yawRateGain':      4.0,#0.8,
                 'stopYawRateGain':  3.0,#,1.0,
                 'maxYawRate':       45.0,
-                'maxSpeed':         1.0, #0.8,
-                'maxAccel':         1.5, #1.0,
+                'maxSpeed':         0.8, #0.8,
+                'maxAccel':         1.0, #1.0,
                 'switchTimeThre':   1.0,
                 'dirDiffThre':      6.0,
                 'stopDisThre':      0.3,
@@ -200,7 +200,6 @@ def generate_launch_description():
                 'joyToSpeedDelay':  2.0,
             }],
         ),
-
 
         # Terrain map acummulator
 

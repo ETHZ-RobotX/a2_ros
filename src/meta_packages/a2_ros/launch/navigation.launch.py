@@ -140,13 +140,13 @@ def generate_launch_description():
                 'useTerrainAnalysis':  True,
                 'checkObstacle':       True,
                 'checkRotObstacle':    True,
-                'adjacentRange':       1.0, #2.0, #3.5,
+                'adjacentRange':       2.0, #1.0, #2.0, #3.5, #2.0 !!!
                 'obstacleHeightThre':  0.25,
                 'groundHeightThre':    0.1,
                 'costHeightThre':      0.1,
                 'costScore':           0.02,
                 'useCost':             False,
-                'pointPerPathThre':    4,
+                'pointPerPathThre':    2, #4 !!!
                 'minRelZ':             -0.5,
                 'maxRelZ':             0.8,
                 'maxSpeed':            1.2, #0.8,

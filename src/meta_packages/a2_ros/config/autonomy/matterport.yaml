@@ -38,7 +38,7 @@ tare_planner_node:
     # PlanningEnv
     kUseFrontier : true
     kFrontierClusterTolerance : 0.5
-    kFrontierClusterMinSize : 5
+    kFrontierClusterMinSize : 2 #5
     kUseCoverageBoundaryOnFrontier : true
     kUseCoverageBoundaryOnObjectSurface : false
 
@@ -75,7 +75,7 @@ tare_planner_node:
     viewpoint_manager/number_x : 40
     viewpoint_manager/number_y : 40
     viewpoint_manager/number_z : 1
-    viewpoint_manager/resolution_x : 0.15
+    viewpoint_manager/resolution_x : 0.15 #0.15
     viewpoint_manager/resolution_y : 0.15
     viewpoint_manager/resolution_z : 0.0
     kConnectivityHeightDiffThr : 0.25
@@ -108,10 +108,10 @@ tare_planner_node:
     kGridWorldNearbyGridNum : 20 #15
     kMinAddPointNumSmall : 8
     kMinAddPointNumBig : 16
-    kMinAddFrontierPointNum : 5 #8
+    kMinAddFrontierPointNum : 20 #3 #5 #8
     kCellExploringToCoveredThr : 1
     kCellCoveredToExploringThr: 10
-    kCellExploringToAlmostCoveredThr: 10
+    kCellExploringToAlmostCoveredThr: 15 #10
     kCellAlmostCoveredToExploringThr: 20
     kCellUnknownToExploringThr: 1
 
