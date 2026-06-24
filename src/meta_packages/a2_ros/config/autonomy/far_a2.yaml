@@ -20,3 +20,6 @@ far_planner:
 
     # Dynamic obstacle decay
     dynamic_obs_decay_time: 2.0
+
+    # obstacle inflation size, default=2, don'y use 1 in real deployment
+    obs_inflation_size: 1

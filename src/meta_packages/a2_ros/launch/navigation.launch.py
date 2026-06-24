@@ -149,22 +149,23 @@ def generate_launch_description():
                 'minRelZ':             -0.5,
                 'maxRelZ':             0.8,
                 'maxSpeed':            0.5,
+                # 'dirWeight':           0.4, # 0.1, higher to avoid too often candidate switching
                 'dirWeight':           0.1,
                 'dirThre':             90.0,
                 'dirToVehicle':        False,
                 'pathScale':           1.0,
                 'minPathScale':        0.75,
-                'pathScaleStep':       0.25,
+                'pathScaleStep':       0.25, # smaller step to avoid too often candidate switching
                 'pathScaleBySpeed':    True,
                 'minPathRange':        1.0,
-                'pathRangeStep':       0.5,
+                'pathRangeStep':       0.5, # unchanged, smaller step to avoid too often candidate switching
                 'pathRangeBySpeed':    True,
                 'pathCropByGoal':      True,
                 'autonomyMode':        True,
                 'autonomySpeed':       1.0,
                 'joyToSpeedDelay':     2.0,
                 'joyToCheckObstacleDelay': 5.0,
-                'goalClearRange':      0.4,
+                'goalClearRange':      0.4, # can be larger e.g. 0.6 to avoid sudden local replanning
                 'goalX':               0.0,
                 'goalY':               0.0,
             }],
@@ -178,16 +179,16 @@ def generate_launch_description():
             parameters=[{
                 'sensorOffsetX':    0.0,
                 'sensorOffsetY':    0.0,
-                'pubSkipNum':       1,
+                'pubSkipNum':       1, # publish every cycle, can be lowered to 2-3
                 'twoWayDrive':      False,
-                'lookAheadDis':     0.4,
-                'yawRateGain':      10.0,
-                'stopYawRateGain':  8.0,
-                'maxYawRate':       45.0,
+                'lookAheadDis':     0.7, # 0.4, longer lookahead for less local path noise
+                'yawRateGain':      5.0, # 10.0, avoid sharp yaw cmds
+                'stopYawRateGain':  4.0, # 8.0, avoid sharp yaw cmds during stopping and aligning
+                'maxYawRate':       25.0, # 45.0, avoid sharp yaw cmds
                 'maxSpeed':         0.5,
-                'maxAccel':         2.0,
+                'maxAccel':         1.0, # 2.0, lower accel for smoother control
                 'switchTimeThre':   1.0,
-                'dirDiffThre':      0.1,
+                'dirDiffThre':      0.1, # decelerates to 0 if yaw error is above this thre
                 'stopDisThre':      0.3,
                 'slowDwnDisThre':   0.6,
                 'useInclRateToSlow': False,

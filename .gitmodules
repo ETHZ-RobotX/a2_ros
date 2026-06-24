@@ -33,7 +33,7 @@
 	url = git@github.com:ETHZ-RobotX/HesaiLidar_ROS_2.0.git
 [submodule "src/object_detection"]
 	path = src/object_detection
-	url = git@github.com:ETHZ-RobotX/a2_object_detection.git
+	url = git@github.com:chriswe12/a2_object_detection.git
 [submodule "src/core/a2_unitree_bridge"]
 	path = src/core/a2_unitree_bridge
 	url = git@github.com:ETHZ-RobotX/a2_unitree_bridge.git
@@ -49,4 +49,4 @@
 	url = git@github.com:ETHZ-RobotX/a2_utils.git
 [submodule "external/resple"]
 	path = external/resple
-	url = git@github.com:ETHZ-RobotX/RESPLE.git
+	url = git@github.com:chriswe12/RESPLE.git

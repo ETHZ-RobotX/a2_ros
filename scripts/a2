@@ -122,7 +122,7 @@ Introspection:
 
 Data:
   bag record [-a] [-t topics] [-i ignore] [-c config.yaml] [suffix]
-  bag play   <file> [--clock] [--pause]   Play back a rosbag (bag name resolves
+  bag play   <file> [--pause] [--loop]    Play back a rosbag (bag name resolves
                      against the bag dir; --clock publishes /clock, --pause starts paused)
 
 Utilities:
@@ -255,10 +255,12 @@ case "$CMD" in
         ;;
     detect)
         # Object detection (YOLO, runs on CPU). Use the real-robot launch on hardware.
+        DETECT_ARGS=()
+        [ "$A2_MODE" = "sim" ] && DETECT_ARGS+=(use_sim_time:=true)
         if [ "$A2_MODE" = "robot" ]; then
-            _run detect ros2 launch object_detection object_detection_real.launch.py
+            _run detect ros2 launch object_detection object_detection_real.launch.py "${ARGS[@]:1}"
         else
-            _run detect ros2 launch object_detection object_detection.launch.py
+            _run detect ros2 launch object_detection object_detection.launch.py "${DETECT_ARGS[@]}" "${ARGS[@]:1}"
         fi
         ;;
     topics)
@@ -277,7 +279,7 @@ case "$CMD" in
             play)
                 FILE="${ARGS[2]:-}"
                 if [[ -z "$FILE" ]]; then
-                    error "Usage: a2 bag play <file> [--clock] [--pause]"
+                    error "Usage: a2 bag play <file> [--pause] [--loop] [...]"
                     exit 1
                 fi
                 # Resolve relative to the bag directory (same default as
@@ -287,9 +289,13 @@ case "$CMD" in
                 if [[ ! -e "$FILE" && -e "$BAG_DIR/$FILE" ]]; then
                     FILE="$BAG_DIR/$FILE"
                 fi
-                # Pass through any extra args, e.g. --clock (publish /clock) and
-                # --pause (start paused), straight to ros2 bag play.
-                ros2 bag play "$FILE" "${ARGS[@]:3}"
+                # Always publish /clock so nodes using use_sim_time get bag
+                # timestamps; pass remaining args (--pause, --loop, --rate, etc.) through.
+                EXTRA_ARGS=("${ARGS[@]:3}")
+                if [[ ! " ${EXTRA_ARGS[*]} " =~ " --clock " ]]; then
+                    EXTRA_ARGS=(--clock "${EXTRA_ARGS[@]}")
+                fi
+                ros2 bag play "$FILE" "${EXTRA_ARGS[@]}"
                 ;;
             *)
                 error "Usage: a2 bag record [OPTIONS] [SUFFIX] | a2 bag play <file>"
